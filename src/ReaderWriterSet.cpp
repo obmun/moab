@@ -24,6 +24,7 @@
 #include "ReadGmsh.hpp"
 #include "ReadIDEAS.hpp"
 #include "ReadMCNP5.hpp"
+#include "ReadOBJ.hpp"
 #include "ReadNASTRAN.hpp"
 #include "ReadABAQUS.hpp"
 #include "ReadSms.hpp"
@@ -120,6 +121,8 @@ ReaderWriterSet::ReaderWriterSet(Core* mdb)
   register_factory( ReadABAQUS::factory, NULL, "ABAQUS INP mesh format", "abq", "Abaqus mesh" );
 
   register_factory( ReadVtk::factory, WriteVtk::factory, "Kitware VTK", "vtk", "VTK" );
+
+  register_factory( ReadOBJ::factory, NULL, "OBJ mesh format", "obj", "OBJ mesh" );
 
   register_factory( ReadSms::factory, NULL, "RPI SMS", "sms", "SMS" );
 
