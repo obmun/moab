@@ -241,6 +241,7 @@ add_library(
 
 target_link_libraries(
   MOAB
+  LINK_PUBLIC
   ${MOAB_DEP_LIBRARIES} ${MOAB_LIBS} ${MOAB_CGM_LIBS} ${MPI_LIBRARIES}
   )
 set_target_properties(
