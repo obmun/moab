@@ -222,7 +222,7 @@ namespace moab
     ErrorCode create_hm_storage_single_level(EntityHandle *set, int cur_level, int estL[4]);
 
     //Generate HM : Construct the hierarchical mesh: 1D, 2D, 3D
-    ErrorCode generate_hm(int *level_degrees, int num_level, EntityHandle *hm_set);
+    ErrorCode generate_hm(int *level_degrees, int num_level, EntityHandle *hm_set, bool optimize);
     ErrorCode construct_hm_entities(int cur_level, int deg);
     ErrorCode construct_hm_1D(int cur_level, int deg);
     ErrorCode construct_hm_1D(int cur_level, int deg, EntityType type, std::vector<EntityHandle> &trackverts);
@@ -305,6 +305,26 @@ namespace moab
     bool is_cell_on_boundary(const EntityHandle& entity);
 
     //ErrorCode find_skin_faces(EntityHandle set, int level, int nskinF);
+
+    /** Parallel communication routines
+           * We implement two strategies to resolve the shared entities of the newly created entities.
+           * The first strategy is to use the existing parallel merge capability which essentially uses
+           * a coordinate-based matching of vertices and subsequently the entity handles through
+           * their connectivities. The second strategy is an optimized and a new algorithm. It uses
+           * the existing shared information from the coarse entities and propagates the parallel
+           *  information appropriately.
+         */
+
+       ErrorCode resolve_shared_ents_parmerge(int level);
+       ErrorCode resolve_shared_ents_opt();
+       ErrorCode resolve_shared_new_ents(std::set<unsigned int> &shared_procs, Range all_shared, std::vector<int> &msgsizes, std::vector<EntityHandle> &locVerts, std::vector<EntityHandle> &locEdges, std::vector<EntityHandle> &locFaces, std::vector<EntityHandle> &remVerts, std::vector<EntityHandle> &remEdges, std::vector<EntityHandle> &remFaces );
+
+       ErrorCode get_shared_new_entities(int pindex, Range shared_ents, std::vector<int> &msgsizes, std::vector<EntityHandle> &locVerts, std::vector<EntityHandle> &locEdges, std::vector<EntityHandle> &locFaces);
+
+       ErrorCode find_remote_duplicate_verts(EntityHandle v, int level, std::vector<EntityHandle> &locVerts, EntityHandle *remoteh, int *remotep, std::vector<EntityHandle> & remVerts, EntityHandle duplvert, EntityHandle *remotehv, int sz);
+
+       ErrorCode update_pstatus_tag();
+
 
   };
 } //name space moab
