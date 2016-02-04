@@ -68,7 +68,7 @@ if HAVE_HDF5
         cropvol_test \
         mergemesh_test \
         mbground_test \
-        lloyd_smoother_test
+        lloyd_smoother_test 
 endif
 
 
@@ -79,6 +79,13 @@ check_PROGRAMS = $(TESTS) \
 		 kd_tree_tool \
 		 kd_tree_time
 
+if HAVE_HDF5
+  check_PROGRAMS += driver 
+if ENABLE_FORTRAN
+  check_PROGRAMS += fex 
+endif
+
+endif
 MOSTLYCLEANFILES = mb_write.g \
                    mb_write2.g \
                    hex_mid_volume_nodes.g \
@@ -144,6 +151,9 @@ mbfacet_test_SOURCES = mbfacet_test.cpp
 mbground_test_SOURCES = mbground_test.cpp
 gttool_test_SOURCES = gttool_test.cpp
 cropvol_test_SOURCES = crop_vol_test.cpp
+driver_SOURCES = driver.cpp
+fex_SOURCES = fex.F
+fex_LDADD = $(LDADD) -lstdc++
 
 test_prog_opt_SOURCES = test_prog_opt.cpp
 test_prog_opt_CPPFLAGS = $(AM_CPPFLAGS) $(CPPFLAGS)
