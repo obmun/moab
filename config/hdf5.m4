@@ -35,6 +35,10 @@ fi
 #  HDF5_LIBS
 #######################################################################################
 AC_DEFUN([FATHOM_CHECK_HDF5],[
+  
+  # Supported HDF5 versions: 1.8.10, 1.8.12, 1.8.14, 1.8.15
+  # Arguments: 1) Default Version Number, 2) Download by default ?
+  AUSCM_CONFIGURE_DOWNLOAD_HDF5([1.8.12],[no])
 
   # CLI option for linking zlib
 AC_ARG_WITH(zlib,
@@ -112,15 +116,15 @@ AC_ARG_WITH(hdf5,
 AS_HELP_STRING([--without-hdf5], [Disable support for native HDF5 file format])],
 [HDF5_ARG=$withval
  DISTCHECK_CONFIGURE_FLAGS="$DISTCHECK_CONFIGURE_FLAGS --with-hdf5=\"${withval}\""
-], [HDF5_ARG=])
-if test "xno" = "x$HDF5_ARG"; then
+], [HDF5_ARG=$HDF5_DIR])
+if test "x" = "x$HDF5_ARG"; then
   AC_MSG_RESULT([no])
 else
   AC_MSG_RESULT([yes])
 fi
 
 HAVE_HDF5=no
-if test "xno" != "x$HDF5_ARG"; then
+if (test "x" != "x$HDF5_ARG" || test "xno" != "x$HDF5_ARG"); then
   HAVE_HDF5=yes
 
     # if a path is specified, update LIBS and INCLUDES accordingly
