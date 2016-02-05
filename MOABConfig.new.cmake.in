@@ -50,14 +50,8 @@ set(MOAB_HAS_FBIGEOM "@ENABLE_IGEOM@")
 set(MOAB_HAS_IMESH "@ENABLE_IMESH@")
 set(MOAB_HAS_MPI "@MOAB_HAS_MPI@")
 
-if(MOAB_USE_HDF)
-  if(EXISTS "@HDF5_DIR@/share/cmake/hdf5/hdf5-config.cmake")
-    include(@HDF5_DIR@/share/cmake/hdf5/hdf5-config.cmake)
-  endif()
-endif()
-
-set(MOAB_LIBRARY_DIRS, "@CMAKE_INSTALL_PREFIX@/lib")
+set(MOAB_LIBRARY_DIRS "@CMAKE_INSTALL_PREFIX@/lib")
 set(MOAB_INCLUDE_DIRS "@CMAKE_INSTALL_PREFIX@/include")
 set(MOAB_LIBRARIES MOAB)
-set(MOAB_LIBS @LIBS@)
+set(MOAB_LIBS @MOAB_LIBS@)
 
