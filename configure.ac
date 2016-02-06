@@ -38,10 +38,13 @@ fi
 AC_SUBST(ENABLE_FORTRAN)
 DISTCHECK_CONFIGURE_FLAGS="$DISTCHECK_CONFIGURE_FLAGS --enable-fortran=$ENABLE_FORTRAN"
 EXTRA_GNU_CXX_FLAGS='-Wno-long-long -Wpointer-arith -Wformat -Wformat-security -pedantic -Wextra -Wno-variadic-macros'
-EXTRA_GNU_FLAGS='-Wall -pipe -Wcast-align -Wshadow -Wunused-parameter'
+EXTRA_GNU_FLAGS='-Wall -pipe -Wcast-align -Wshadow'
 EXTRA_INTEL_FLAGS='-Wall'
 EXTRA_INTEL_FFLAGS='-check all'
 EXTRA_BG_FLAGS='-qarch=auto -qtune=auto -qpic=large'
+
+MB_CPPFLAGS=""
+MB_DEFS=""
 
 # Find out the appropriate compiler based on user options
 AC_ARG_VAR([FC], [FORTRAN compiler command])
@@ -66,17 +69,6 @@ AC_DISABLE_SHARED
 LT_INIT([dlopen])
 
 AC_C_BIGENDIAN
-
-MB_CPPFLAGS=""
-MB_DEFS=""
-
-# Check if platform is BlueGene
-AC_MSG_CHECKING([if platform is IBM BlueGene])
-FATHOM_TRY_COMPILER_DEFINE([__bg__],
-  [MB_DEFS="$MB_DEFS -DBLUEGENE"
-   MB_BLUEGENE_CONF=yes],
-  [MB_BLUEGENE_CONF=no])
-AC_MSG_RESULT([$MB_BLUEGENE_CONF])
 
 AC_CHECK_PROG([ZCAT],[gunzip],[gunzip -c],[])
 AC_CHECK_PROG([ZCAT],[gzip],[gzip -cd],[])
@@ -1314,10 +1306,10 @@ AC_OUTPUT_COMMANDS( [if test -f tools/dagmc/dagmc_export.h; then true; else echo
 AC_CONFIG_HEADERS([src/moab/Version.h
                    src/moab/EntityHandle.hpp
                    src/parallel/moab_mpi_config.h
-                   src/FCDefs.h
                    src/mesquite/include/mesquite_config.h
                    src/mesquite/include/mesquite_version.h
                   ])
+AX_PREFIX_CONFIG_H([src/moab/MOABConfig.h],[MOAB],[src/moab/MOABConfig.h])
 
 AC_CONFIG_FILES([Makefile 
                  moab.make                  
@@ -1384,9 +1376,6 @@ AC_CONFIG_FILES([src/mesquite/Makefile
                  MeshFiles/mesquite/Makefile
                  ])
 
-
-AC_CONFIG_COMMANDS([src/MOAB_FCDefs.h],
-  [sed -e "s/FC_FUNC/MOAB_FC_FUNC/" src/FCDefs.h >src/MOAB_FCDefs.h])
 
 # DISTCHECK_CONFIGURE_FLAGS="$USER_CONFIGURE_CMD"
 # make distcheck will use this DISTCHECK_CONFIGURE_FLAGS 
