@@ -251,3 +251,4 @@ if HAVE_CGM
   AM_CPPFLAGS += @CGM_CPPFLAGS@ 
 endif
 
+DISTCLEANFILES = moab_export.h
