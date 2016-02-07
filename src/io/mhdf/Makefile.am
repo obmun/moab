@@ -34,7 +34,7 @@ h5minfo_LDADD = libmhdf.la $(HDF5_LIBS)
 h5mvalidate_SOURCES = example/validate.c
 h5mvalidate_LDADD = libmhdf.la $(HDF5_LIBS)
 
-DEFS = -I$(srcdir)/include 
+DEFS = -I$(srcdir)/include -I$(top_srcdir)/src
 
 EXTRA_DIST = doc/Doxyfile example/hexes_to_gmsh.c
 
