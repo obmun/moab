@@ -192,8 +192,8 @@ if (test "x$enable_cxx_optimize" != "xno"); then  # optimization flags
 EXTRA_GNU_CXXFLAGS="$EXTRA_GNU_CXXFLAGS -finline-functions -march=native"
 EXTRA_GNU_FCFLAGS="$EXTRA_GNU_FCFLAGS -ffree-line-length-0 -march=native"
 # Intel
-EXTRA_INTEL_CXXFLAGS="$EXTRA_INTEL_CXXFLAGS -march=native -mtune -fast -no-prec-div -fno-alias"
-EXTRA_INTEL_FCFLAGS="$EXTRA_INTEL_FCFLAGS -march=native -mtune -fast -no-prec-div -fno-alias"
+EXTRA_INTEL_CXXFLAGS="$EXTRA_INTEL_CXXFLAGS -xHost -ip -no-prec-div" # -fast
+EXTRA_INTEL_FCFLAGS="$EXTRA_INTEL_FCFLAGS -xHost -ip -no-prec-div" # -fast
 # PGI
 EXTRA_PGI_CXXFLAGS="$EXTRA_PGI_CXXFLAGS -fast -Mnoframe"
 EXTRA_PGI_FCFLAGS="$EXTRA_PGI_FCFLAGS -fast -Mnoframe"
@@ -823,7 +823,7 @@ case "$cc_compiler:$host_cpu" in
     FATHOM_CC_32BIT=-m32
     FATHOM_CC_64BIT=-m64
     FATHOM_CC_SPECIAL="$EXTRA_INTEL_CXXFLAGS -wd981 -wd279 -wd1418 -wd383 -wd1572"
-    FATHOM_FC_SPECIAL="$EXTRA_INTEL_FCFLAGS -wd981 -wd279 -wd1418 -wd383 -wd1572"
+    FATHOM_FC_SPECIAL="$EXTRA_INTEL_FCFLAGS"
     ;;
   GNU:mips*)
     FATHOM_CC_32BIT="-mips32 -mabi=32"
