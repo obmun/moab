@@ -28,6 +28,10 @@ AX_PREFIX_CONFIG_H([src/moab/MOABConfig.h],[MOAB],[src/moab/MOABConfig.h])
 #                           Compilers
 ################################################################################
 INITIALIZE_EXTERNAL_PACKAGES
+
+MB_CPPFLAGS=""
+MB_DEFS=""
+
 ENABLE_FORTRAN=no
 AC_ARG_ENABLE([fortran],
               [AS_HELP_STRING([--disable-fortran], [Disable Fortran support and name mangling in ITAPS/MBCN C headers])])
@@ -37,14 +41,6 @@ if (test "x$enable_fortran" != "xno"); then
 fi
 AC_SUBST(ENABLE_FORTRAN)
 DISTCHECK_CONFIGURE_FLAGS="$DISTCHECK_CONFIGURE_FLAGS --enable-fortran=$ENABLE_FORTRAN"
-EXTRA_GNU_CXX_FLAGS='-Wno-long-long -Wpointer-arith -Wformat -Wformat-security -pedantic -Wextra -Wno-variadic-macros'
-EXTRA_GNU_FLAGS='-Wall -pipe -Wcast-align -Wshadow'
-EXTRA_INTEL_FLAGS='-Wall'
-EXTRA_INTEL_FFLAGS='-check all'
-EXTRA_BG_FLAGS='-qarch=auto -qtune=auto -qpic=large'
-
-MB_CPPFLAGS=""
-MB_DEFS=""
 
 # Find out the appropriate compiler based on user options
 AC_ARG_VAR([FC], [FORTRAN compiler command])
