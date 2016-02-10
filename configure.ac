@@ -23,6 +23,10 @@ USER_CONFIGURE_CMD="$0 $ac_configure_args"
 #                           Compilers
 ################################################################################
 INITIALIZE_EXTERNAL_PACKAGES
+
+MB_CPPFLAGS=""
+MB_DEFS=""
+
 ENABLE_FORTRAN=no
 AC_ARG_ENABLE([fortran],
               [AS_HELP_STRING([--disable-fortran], [Disable Fortran support and name mangling in ITAPS/MBCN C headers])])
@@ -32,11 +36,6 @@ if (test "x$enable_fortran" != "xno"); then
 fi
 AC_SUBST(ENABLE_FORTRAN)
 DISTCHECK_CONFIGURE_FLAGS="$DISTCHECK_CONFIGURE_FLAGS --enable-fortran=$ENABLE_FORTRAN"
-EXTRA_GNU_CXX_FLAGS='-Wno-long-long -Wpointer-arith -Wformat -Wformat-security -pedantic -Wextra -Wno-variadic-macros'
-EXTRA_GNU_FLAGS='-Wall -pipe -Wcast-align -Wshadow -Wunused-parameter'
-EXTRA_INTEL_FLAGS='-Wall'
-EXTRA_INTEL_FFLAGS='-check all'
-EXTRA_BG_FLAGS='-qarch=auto -qtune=auto -qpic=large'
 
 # Find out the appropriate compiler based on user options
 FATHOM_CHECK_COMPILERS([yes],[yes],[$ENABLE_FORTRAN])
@@ -64,17 +63,6 @@ AC_DISABLE_SHARED
 LT_INIT([dlopen])
 
 AC_C_BIGENDIAN
-
-MB_CPPFLAGS=""
-MB_DEFS=""
-
-# Check if platform is BlueGene
-AC_MSG_CHECKING([if platform is IBM BlueGene])
-FATHOM_TRY_COMPILER_DEFINE([__bg__],
-  [MB_DEFS="$MB_DEFS -DBLUEGENE"
-   MB_BLUEGENE_CONF=yes],
-  [MB_BLUEGENE_CONF=no])
-AC_MSG_RESULT([$MB_BLUEGENE_CONF])
 
 AC_CHECK_PROG([ZCAT],[gunzip],[gunzip -c],[])
 AC_CHECK_PROG([ZCAT],[gzip],[gzip -cd],[])
