@@ -192,8 +192,8 @@ if (test "x$enable_cxx_optimize" != "xno"); then  # optimization flags
 EXTRA_GNU_CXXFLAGS="$EXTRA_GNU_CXXFLAGS -finline-functions -march=native"
 EXTRA_GNU_FCFLAGS="$EXTRA_GNU_FCFLAGS -ffree-line-length-0 -march=native"
 # Intel
-EXTRA_INTEL_CXXFLAGS="$EXTRA_INTEL_CXXFLAGS -march=native -mtune -fast -no-prec-div -fno-alias"
-EXTRA_INTEL_FCFLAGS="$EXTRA_INTEL_FCFLAGS -march=native -mtune -fast -no-prec-div -fno-alias"
+EXTRA_INTEL_CXXFLAGS="$EXTRA_INTEL_CXXFLAGS -xHost -fast"
+EXTRA_INTEL_FCFLAGS="$EXTRA_INTEL_FCFLAGS -xHost -fast"
 # PGI
 EXTRA_PGI_CXXFLAGS="$EXTRA_PGI_CXXFLAGS -fast -Mnoframe"
 EXTRA_PGI_FCFLAGS="$EXTRA_PGI_FCFLAGS -fast -Mnoframe"
