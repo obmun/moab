@@ -177,11 +177,11 @@ if (test "x$enable_debug" != "xno"); then # debug flags
 EXTRA_GNU_CXXFLAGS="-Wall -pipe -pedantic -Wshadow -Wunused-parameter -Wpointer-arith -Wformat -Wformat-security -Wextra -Wno-variadic-macros -Wno-unknown-pragmas"
 EXTRA_GNU_FCFLAGS="-fcheck=all -pipe -pedantic -Wextra -ffree-line-length-0 -Wno-long-long"
 # Intel
-EXTRA_INTEL_CXXFLAGS="-warn all -pipe -C"
-EXTRA_INTEL_FCFLAGS="-check all -pipe -C"
+EXTRA_INTEL_CXXFLAGS="-pipe -C"
+EXTRA_INTEL_FCFLAGS="-pipe -C"
 # PGI
-EXTRA_PGI_CXXFLAGS="-C -traceback -Mfree"
-EXTRA_PGI_FCFLAGS="-C -traceback -Mfree"
+EXTRA_PGI_CXXFLAGS="-traceback -Mfree -C"
+EXTRA_PGI_FCFLAGS="-traceback -Mfree -C -freeform -extend-source"
 # XLC
 EXTRA_BG_CXXFLAGS="-qarch=auto -qtune=auto -qpic=large -qdebug=except -qrtti=dyna"
 EXTRA_BG_FCFLAGS="-qarch=auto -qtune=auto -qpic=large -qdebug=except"
@@ -189,14 +189,14 @@ fi
 
 if (test "x$enable_cxx_optimize" != "xno"); then  # optimization flags
 #GNU
-EXTRA_GNU_CXXFLAGS="$EXTRA_GNU_CXXFLAGS -finline-functions -march=native"
-EXTRA_GNU_FCFLAGS="$EXTRA_GNU_FCFLAGS -ffree-line-length-0 -march=native"
+EXTRA_GNU_CXXFLAGS="$EXTRA_GNU_CXXFLAGS -finline-functions -ftree-vectorize -finline-functions -march=native"
+EXTRA_GNU_FCFLAGS="$EXTRA_GNU_FCFLAGS -ffree-line-length-0 -ftree-vectorize -finline-functions -march=native"
 # Intel
 EXTRA_INTEL_CXXFLAGS="$EXTRA_INTEL_CXXFLAGS -xHost -ip -no-prec-div" # -fast
 EXTRA_INTEL_FCFLAGS="$EXTRA_INTEL_FCFLAGS -xHost -ip -no-prec-div" # -fast
 # PGI
-EXTRA_PGI_CXXFLAGS="$EXTRA_PGI_CXXFLAGS -fast -Mnoframe"
-EXTRA_PGI_FCFLAGS="$EXTRA_PGI_FCFLAGS -fast -Mnoframe"
+EXTRA_PGI_CXXFLAGS="$EXTRA_PGI_CXXFLAGS -Munroll=5 -Mnoframe"
+EXTRA_PGI_FCFLAGS="$EXTRA_PGI_FCFLAGS -Munroll=5 -Mnoframe -freeform -extend-source"
 # XLC
 EXTRA_BG_CXXFLAGS="$EXTRA_BG_CXXFLAGS -qarch=auto -qtune=auto -qpic=large -qipa=1 -qenablevmx -qrtti=dyna"
 EXTRA_BG_FCFLAGS="$EXTRA_BG_FCFLAGS -qarch=auto -qtune=auto -qpic=large -qipa=1 -qenablevmx"
