@@ -630,9 +630,10 @@ if [ $1 ]; then
     compiler_opts="CC=$CC CXX=$CXX FC=$FC F77=$F77 MPIEXEC=$MPIEXEC"
     configure_command="$hdf5_src_dir/configure --prefix=$hdf5_install_dir --libdir=$hdf5_install_dir/lib --with-pic=1 $compiler_opts"
     # configure_command="$configure_command --enable-cxx --enable-unsupported"
-    if (test "$enable_debug" != "no"); then
-      configure_command="$configure_command --enable-debug=all"
-    fi
+    # VSM: Adding --enable-debug=all is causing problems in h5legacy test. So disabling debug symbols for HDF5.
+    #if (test "$enable_debug" != "no"); then
+    #  configure_command="$configure_command --enable-debug"
+    #fi
     if (test "$enable_shared" != "no"); then
       configure_command="$configure_command --enable-shared"
     fi
