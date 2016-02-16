@@ -160,8 +160,10 @@ ErrorCode mb_vertex_coordinate_test()
     // Try getting coordinates for a hex (should fail)
   Range hexes;
   error = MB->get_entities_by_type( 0, MBHEX, hexes );
+  CHKERR(error);
   EntityHandle handle = hexes.front();
   error = MB->get_coords(&handle, 1, &x[0]);
+  CHKERR(error);
   CHECK_EQUAL(0.5, x[0]);
   CHECK_EQUAL(0.5, x[1]);
   CHECK_EQUAL(0.5, x[2]);
@@ -197,6 +199,7 @@ ErrorCode mb_vertex_tag_test()
     // put a value in vertex 1 and retrieve
   std::vector<EntityHandle> verts;
   error = MB->get_entities_by_type( 0, MBVERTEX, verts );
+  if (MB_SUCCESS != error) return error;
   EntityHandle handle = verts[0];
   int input_value = 11;
   error = MB->tag_set_data(tag_id, &handle, 1, &input_value);
@@ -261,8 +264,8 @@ ErrorCode mb_vertex_tag_test()
     // put a value in vertex 8: and retrieve
 
   handle = verts[8];
-  double double_input_value = true;
-  double double_output_value = false;
+  double double_input_value = 1.0;
+  double double_output_value = 0.0;
   error = MB->tag_set_data(tag_id, &handle, 1, &double_input_value);
   if (error != MB_SUCCESS) return error;
 
@@ -600,7 +603,7 @@ ErrorCode mb_adjacencies_test()
       iter = nodes.erase(iter);
     }
     else
-      iter++;
+      ++iter;
 
   }
 
@@ -1046,7 +1049,7 @@ ErrorCode nothing_but_type( Range& range, EntityType type )
   iter = range.begin();
   end_iter = range.end();
 
-  for(; iter != end_iter; iter++)
+  for(; iter != end_iter; ++iter)
   {
     if( TYPE_FROM_HANDLE(*iter) != type )
     {
@@ -2275,6 +2278,7 @@ ErrorCode mb_mesh_set_list_replace_test()
   std::vector<EntityHandle> list( verts );
   list.push_back( verts.front() );
   rval = mb->add_entities( set, &list[0], list.size() );
+  CHKERR(rval);
     // swap 3 of the vertices
   EntityHandle old_ents[3] = { verts[2], verts[4], verts[6] };
   EntityHandle new_ents[3] = { verts[1], verts[9], verts[5] };
@@ -3386,7 +3390,7 @@ ErrorCode mb_tags_test()
       return MB_FAILURE;
     if(MB->tag_set_data( stale_bits, &(*iter), 1, &bits ) != MB_SUCCESS ) 
       return MB_FAILURE;
-    iter++;
+    ++iter;
   }
 
   entities.clear();
@@ -3574,6 +3578,7 @@ public:
   OffsetHexCenterNodes(Interface* mb, double x, double y, double z)
       : gMB(mb)
     { 
+      mCoords[0] = 0.0; mCoords[1] = 0.0; mCoords[2] = 0.0;
       mOffset[0] = x; mOffset[1] = y; mOffset[2] = z; 
     }
     
@@ -4202,7 +4207,7 @@ ErrorCode mb_forced_adjacencies_test()
   {
   std::vector<EntityHandle> vert_vec(vertices.size());
   Range::const_iterator iter;
-  for (iter = vertices.begin(); iter != vertices.end(); iter++) 
+  for (iter = vertices.begin(); iter != vertices.end(); ++iter)
   vert_vec.push_back(*iter);
   vert_vec.sort(lessnodesZ);
   }*/
@@ -4229,13 +4234,13 @@ ErrorCode find_coincident_nodes(Interface* gMB, Range vertices,
   std::pair<EntityHandle, EntityHandle> coincident_pair;
   ErrorCode result;
 
-  for (iter = vertices.begin(); iter != vertices.end(); iter++)
+  for (iter = vertices.begin(); iter != vertices.end(); ++iter)
   {
     result = gMB->get_coords(&(*iter),1, first_coords);
     if (result != MB_SUCCESS)
       return result;
 
-    for (jter = iter; jter != vertices.end(); jter++)
+    for (jter = iter; jter != vertices.end(); ++jter)
     {
       if (*iter != *jter)
       {
@@ -4264,7 +4269,7 @@ ErrorCode find_coincident_elements(Interface* gMB, Range entities, int num_nodes
   std::pair<EntityHandle, EntityHandle> coincident_pair;
   int i = 0,/* j = 0,*/ ii = 0;
 
-  for(iter = entities.begin(); iter != entities.end(); iter++)
+  for(iter = entities.begin(); iter != entities.end(); ++iter)
   {
       // Get the coordinates for the element corners.
     if(gMB->get_connectivity(&(*iter), 1, conn) != MB_SUCCESS)
@@ -4275,7 +4280,7 @@ ErrorCode find_coincident_elements(Interface* gMB, Range entities, int num_nodes
         return MB_FAILURE;
     }
 
-    for(jter = iter; jter != entities.end(); jter++)
+    for(jter = iter; jter != entities.end(); ++jter)
     {
       if(*iter != *jter)
       {
@@ -4443,6 +4448,8 @@ ErrorCode mb_merge_test()
       //get Hexes from model
   }
   result = MB->get_entities_by_type(0, MBHEX, entities);
+  if (MB_SUCCESS != result)
+    return result;
   Skinner_Obj.find_skin(0,entities,false,forward_lower,&reverse_lower);
   cout <<"num hexes = "<<entities.size()<<"\n";
   cout <<"fl = "<<forward_lower.size()<<" rl = "<<reverse_lower.size()<<"\n";
@@ -4469,7 +4476,7 @@ ErrorCode mb_merge_test()
   result = find_coincident_nodes(MB,nodes, coin_nodes);
   cout <<"coin_nodes.size() = "<<coin_nodes.size() <<"\n";
   std::vector< std::pair<EntityHandle, EntityHandle> >::iterator n_iter;
-  for (n_iter=coin_nodes.begin(); n_iter != coin_nodes.end(); n_iter++) {
+  for (n_iter=coin_nodes.begin(); n_iter != coin_nodes.end(); ++n_iter) {
     result = MB->merge_entities((*n_iter).first, (*n_iter).second, false, true);
     if (MB_SUCCESS != result)
       return result;
@@ -4480,7 +4487,7 @@ ErrorCode mb_merge_test()
         if (result != MB_SUCCESS) cout <<"find_coincident_elements fail!\n";
         cout <<"coin_faces.size() = "<<coin_faces.size() <<"\n";
         std::vector< std::pair<EntityHandle, EntityHandle> >::iterator f_iter;
-        for (f_iter=coin_faces.begin(); f_iter != coin_faces.end(); f_iter++)
+        for (f_iter=coin_faces.begin(); f_iter != coin_faces.end(); ++f_iter)
         MB->merge_entities((*f_iter).first, (*f_iter).second, true, true);*/
     /*
       std::vector<std::pair<EntityHandle, EntityHandle> > coin_fl;
@@ -4671,7 +4678,7 @@ ErrorCode mb_stress_test()
 
   std::vector<EntityHandle> conn;
   Range::iterator iter;
-  for (iter = hexes.begin(); iter != hexes.end(); iter++)
+  for (iter = hexes.begin(); iter != hexes.end(); ++iter)
   {
     error = MB->get_connectivity(&(*iter), 1, conn);
     if (error != MB_SUCCESS)
@@ -4683,7 +4690,7 @@ ErrorCode mb_stress_test()
     EntityHandle element_handle;
     std::vector<EntityHandle>::iterator jter;
 
-    for (jter = conn.begin(); jter != conn.end(); jter++)
+    for (jter = conn.begin(); jter != conn.end(); ++jter)
     {
       error = MB->get_coords(&(*jter), 1, coords);
       if (error != MB_SUCCESS)
@@ -6331,8 +6338,14 @@ ErrorCode mb_skin_surface_test_common( bool use_adj )
     // Check each edge
   std::vector<EntityHandle> conn[3];
   rval = mb->get_connectivity( &skin.front(), 1, conn[0] );
+  if (MB_SUCCESS != rval)
+    return rval;
   rval = mb->get_connectivity( &*++skin.begin(), 1, conn[1] );
+  if (MB_SUCCESS != rval)
+    return rval;
   rval = mb->get_connectivity( &skin.back(), 1, conn[2] );
+  if (MB_SUCCESS != rval)
+    return rval;
   for (int i = 0; i < 3; ++i)
     if (conn[i][0] > conn[i][1])
       std::swap(conn[i][0], conn[i][1]);
@@ -7331,6 +7344,75 @@ ErrorCode mb_skin_higher_order_regions_common( bool use_adj )
   return all_okay ? MB_SUCCESS : MB_FAILURE;
 }
 
+// Test that skinning of higher-order elements works
+ErrorCode mb_skin_higher_order_pyramids( )
+{
+  // create mesh containing 13-node pyramid
+  /*
+
+  */
+
+  ErrorCode rval;
+  Core moab;
+  Interface& mb = moab;
+  Range pyramids;
+
+
+  // easier to create a 27 node grid, and then pick a 13-node pyramid
+  EntityHandle verts[3][3][3];
+  for (int i = 0; i < 3; ++i)
+    for (int j = 0; j < 3; ++j)
+      for (int k = 0; k < 3; ++k) {
+        double coords[] = { static_cast<double>(i), static_cast<double>(j), static_cast<double>(k) };
+        rval = mb.create_vertex( coords, verts[i][j][k] );
+        if (MB_SUCCESS != rval) return rval;
+      }
+
+
+  EntityHandle piramid1[13]={19, 25, 27, 21, 1, 22, 26, 24, 20, 10, 13, 14, 11};
+
+  EntityHandle h;
+
+  rval = mb.create_element( MBPYRAMID, piramid1, 13, h );
+  if (MB_SUCCESS != rval)
+    return rval;
+  pyramids.insert( h );
+
+  Range faces;
+  rval = mb.get_adjacencies(pyramids,2, true, faces , Interface::UNION);
+  // triangles should have 6 nodes, quads 8 nodes
+
+  if (MB_SUCCESS != rval)
+    return rval;
+
+  Range tris=faces.subset_by_type(MBTRI);
+  Range quads = faces.subset_by_type(MBQUAD);
+
+  for (Range::iterator tit=tris.begin(); tit!=tris.end(); tit++)
+  {
+    EntityHandle triangle = *tit;
+    const EntityHandle * conn;
+    int num_verts;
+    rval = mb.get_connectivity(triangle, conn, num_verts);
+    if (MB_SUCCESS != rval)
+      return rval;
+    if (6!=num_verts)
+      return MB_FAILURE;
+  }
+  for (Range::iterator qit=quads.begin(); qit!=quads.end(); qit++)
+  {
+    EntityHandle quad = *qit;
+    const EntityHandle * conn;
+    int num_verts;
+    rval = mb.get_connectivity(quad, conn, num_verts);
+    if (MB_SUCCESS != rval)
+      return rval;
+    if (8!=num_verts)
+      return MB_FAILURE;
+  }
+
+  return  MB_SUCCESS;
+}
 ErrorCode mb_skin_higher_order_regions_test()
   { return mb_skin_higher_order_regions_common(false); }
 ErrorCode mb_skin_adj_higher_order_regions_test()
@@ -8459,6 +8541,7 @@ int main(int argc, char* argv[])
   RUN_TEST( mb_skin_higher_order_faces_test );
   RUN_TEST( mb_skin_higher_order_regions_test );
   RUN_TEST( mb_skin_adj_higher_order_faces_test );
+  RUN_TEST(mb_skin_higher_order_pyramids);
   RUN_TEST( mb_skin_adj_higher_order_regions_test );
   RUN_TEST( mb_skin_faces_reversed_test );
   RUN_TEST( mb_skin_adj_faces_reversed_test );

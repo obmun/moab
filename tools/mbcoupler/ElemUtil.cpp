@@ -766,7 +766,7 @@ namespace Element {
                                            {0,1,0},
                                            {0,0,1}};
 
-  LinearTet::LinearTet() : Map(0) {
+  LinearTet::LinearTet() : Map(0), det_T(0.0), det_T_inverse(0.0) {
 
   }// LinearTet::LinearTet()
 
@@ -781,7 +781,7 @@ namespace Element {
                       v[1][2]-v[0][2],v[2][2]-v[0][2],v[3][2]-v[0][2]);
     this->T_inverse = this->T.inverse();
     this->det_T = this->T.determinant();
-    this->det_T_inverse = (0.0 == this->det_T ? HUGE : 1.0/this->det_T);
+    this->det_T_inverse = (this->det_T < 1e-12 ? std::numeric_limits<double>::max() : 1.0/this->det_T);
   }// LinearTet::set_vertices()
 
 
@@ -824,6 +824,7 @@ namespace Element {
 
   SpectralHex::SpectralHex() : Map(0)
   {
+    _xyz[0] = _xyz[1] = _xyz[2] = NULL;
   }
   // the preferred constructor takes pointers to GL blocked positions
   SpectralHex::SpectralHex(int order, double * x, double *y, double *z) : Map(0)
@@ -1109,6 +1110,7 @@ namespace Element {
 
   SpectralQuad::SpectralQuad() : Map(0)
   {
+    _xyz[0] = _xyz[1] = _xyz[2] = NULL;
   }
   // the preferred constructor takes pointers to GL blocked positions
   SpectralQuad::SpectralQuad(int order, double * x, double *y, double *z) : Map(0)

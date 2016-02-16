@@ -40,6 +40,7 @@
 #include "ReadHDF5.hpp"
 #include "moab/CN.hpp"
 #include "moab/FileOptions.hpp"
+#include "moab/CpuTimer.hpp"
 #ifdef MOAB_HAVE_HDF5_PARALLEL
 #include <H5FDmpi.h>
 #include <H5FDmpio.h>
@@ -206,7 +207,9 @@ ReadHDF5::ReadHDF5(Interface* iface)
     blockedCoordinateIO(DEFAULT_BLOCKED_COORDINATE_IO),
     bcastSummary(DEFAULT_BCAST_SUMMARY),
     bcastDuplicateReads(DEFAULT_BCAST_DUPLICATE_READS),
-    setMeta(0)
+    setMeta(0),
+    timer(NULL),
+    cputime(false)
 {
 }
 
@@ -305,7 +308,6 @@ ErrorCode ReadHDF5::set_up_read(const char* filename,
   bool bglockless = (MB_SUCCESS == opts.get_null_option("BGLOCKLESS"));
 
   // Handle parallel options
-  std::string junk;
   bool use_mpio = (MB_SUCCESS == opts.get_null_option("USE_MPIO"));
   rval = opts.match_option("PARALLEL", "READ_PART");
   bool parallel = (rval != MB_ENTITY_NOT_FOUND);
@@ -508,7 +510,7 @@ ErrorCode ReadHDF5::clean_up_read(const FileOptions&)
   herr_t err = H5Eget_auto(&handler.func, &handler.data);
 #endif
   if (err >= 0 && handler.func == &handle_hdf5_error) {
-    assert(handler.data = &errorHandler);
+    assert(handler.data == &errorHandler);
 #if defined(H5Eget_auto_vers) && H5Eget_auto_vers > 1
     H5Eset_auto(H5E_DEFAULT, errorHandler.func, errorHandler.data);
 #else
@@ -551,11 +553,23 @@ ErrorCode ReadHDF5::load_file(const char* filename,
     clean_up_read(opts);
     return rval;
   }
+  // See if we need to report times
+
+  rval = opts.get_null_option("CPUTIME");
+  if (MB_SUCCESS == rval)
+  {
+    cputime = true;
+    timer = new CpuTimer;
+    for (int i=0; i<NUM_TIMES; i++)
+      _times[i]=0;
+  }
 
   // We read the entire set description table regardless of partial
   // or complete reads or serial vs parallel reads
   rval = read_all_set_meta();
- 
+
+  if (cputime)
+    _times[SET_META_TIME]=timer->time_elapsed();
   if (subset_list && MB_SUCCESS == rval)
     rval = load_file_partial(subset_list->tag_list,
                              subset_list->tag_list_length,
@@ -569,12 +583,16 @@ ErrorCode ReadHDF5::load_file(const char* filename,
     dbgOut.tprint(1, "Storing file IDs in tag\n");
     rval = store_file_ids(*file_id_tag);
   }
+  if (cputime)
+    _times[STORE_FILE_IDS_TIME]=timer->time_elapsed();
 
   if (MB_SUCCESS == rval && 0 != file_set) {
     dbgOut.tprint(1, "Reading QA records\n");
     rval = read_qa(*file_set);
   }
 
+  if (cputime)
+    _times[READ_QA_TIME]=timer->time_elapsed();
   dbgOut.tprint(1, "Cleaning up\n");
   ErrorCode rval2 = clean_up_read(opts);
   if (rval == MB_SUCCESS && rval2 != MB_SUCCESS)
@@ -588,6 +606,11 @@ ErrorCode ReadHDF5::load_file(const char* filename,
     dbgOut.tprintf(1, "READ FAILED (ERROR CODE %s): %s\n", ErrorCodeStr[rval], msg.c_str());
   }
 
+  if (cputime) {
+    _times[TOTAL_TIME] = timer->time_since_birth();
+    print_times();
+    delete timer;
+  }
   if (H5P_DEFAULT != collIO)
     H5Pclose(collIO);
   if (H5P_DEFAULT != indepIO)
@@ -601,7 +624,6 @@ ErrorCode ReadHDF5::load_file_impl(const FileOptions&)
 {
   ErrorCode rval;
   mhdf_Status status;
-  std::string tagname;
   int i;
 
   CHECK_OPEN_HANDLES;
@@ -808,11 +830,21 @@ ErrorCode ReadHDF5::load_file_partial(const ReaderIface::IDTag* subset_list,
   if (MB_SUCCESS != rval)
     MB_SET_ERR(rval, "ReadHDF5 Failure");
 
+  if (cputime)
+    _times[SUBSET_IDS_TIME] = timer->time_elapsed();
+
   if (num_parts) {
+    if (num_parts>(int)file_ids.size())
+    {
+      MB_SET_ERR(MB_FAILURE, "Only " << file_ids.size() << " parts to distribute to " << num_parts << " processes.");
+    }
     rval = get_partition(file_ids, num_parts, part_number);
     if (MB_SUCCESS != rval)
       MB_SET_ERR(rval, "ReadHDF5 Failure");
   }
+
+  if (cputime)
+    _times[GET_PARTITION_TIME] = timer->time_elapsed();
 
   dbgOut.print_ints(4, "Set file IDs for partial read: ", file_ids);
   mpe_event.end();
@@ -848,6 +880,8 @@ ErrorCode ReadHDF5::load_file_partial(const ReaderIface::IDTag* subset_list,
       MB_SET_ERR(rval, "ReadHDF5 Failure");
   }
 
+  if (cputime)
+    _times[GET_SET_IDS_TIME] = timer->time_elapsed();
   debug_barrier();
 
   // Get elements and vertices contained in sets
@@ -855,6 +889,9 @@ ErrorCode ReadHDF5::load_file_partial(const ReaderIface::IDTag* subset_list,
   rval = get_set_contents(sets, file_ids);
   if (MB_SUCCESS != rval)
     MB_SET_ERR(rval, "ReadHDF5 Failure");
+
+  if (cputime)
+    _times[GET_SET_CONTENTS_TIME] = timer->time_elapsed();
 
   dbgOut.print_ints(5, "File IDs for partial read: ", file_ids);
   debug_barrier();
@@ -904,6 +941,8 @@ ErrorCode ReadHDF5::load_file_partial(const ReaderIface::IDTag* subset_list,
       MB_SET_ERR(rval, "ReadHDF5 Failure");
   }
 
+  if (cputime)
+    _times[GET_POLYHEDRA_TIME] = timer->time_elapsed();
   // Get node file ids for all elements
   Range nodes;
   intersect(fileInfo->nodes, file_ids, nodes);
@@ -938,7 +977,8 @@ ErrorCode ReadHDF5::load_file_partial(const ReaderIface::IDTag* subset_list,
     if (MB_SUCCESS != rval)
       MB_SET_ERR(rval, "ReadHDF5 Failure");
   }
-
+  if (cputime)
+    _times[GET_ELEMENTS_TIME] = timer->time_elapsed();
   debug_barrier();
   mpe_event.start("read coords");
   dbgOut.tprintf(1, "READING NODE COORDINATES (%lu nodes in %lu selects)\n",
@@ -951,6 +991,9 @@ ErrorCode ReadHDF5::load_file_partial(const ReaderIface::IDTag* subset_list,
   mpe_event.end(rval);
   if (MB_SUCCESS != rval)
     MB_SET_ERR(rval, "ReadHDF5 Failure");
+
+  if (cputime)
+    _times[GET_NODES_TIME] = timer->time_elapsed();
 
   debug_barrier();
   dbgOut.tprint(1, "READING ELEMENTS\n");
@@ -996,6 +1039,8 @@ ErrorCode ReadHDF5::load_file_partial(const ReaderIface::IDTag* subset_list,
     }
   }
 
+  if (cputime)
+    _times[GET_NODEADJ_TIME] = timer->time_elapsed();
   Range side_entities;
   if (side_mode != SM_EXPLICIT /*ELEMENTS=NODES || ELEMENTS=SIDES*/) {
     if (0 == max_dim)
@@ -1022,6 +1067,9 @@ ErrorCode ReadHDF5::load_file_partial(const ReaderIface::IDTag* subset_list,
   // We have to wait until the faces are read in the above code block,
   // but need to create the connectivity before doing update_connectivity,
   // which might otherwise delete polyhedra faces.
+  if (cputime)
+   _times[GET_SIDEELEM_TIME] = timer->time_elapsed();
+
   debug_barrier();
   dbgOut.tprint(1, "UPDATING CONNECTIVITY ARRAYS FOR READ ELEMENTS\n");
   mpe_event.start("updating connectivity for elements read before vertices");
@@ -1030,10 +1078,13 @@ ErrorCode ReadHDF5::load_file_partial(const ReaderIface::IDTag* subset_list,
   if (MB_SUCCESS != rval)
     MB_SET_ERR(rval, "ReadHDF5 Failure");
 
+  if (cputime)
+   _times[UPDATECONN_TIME] = timer->time_elapsed();
+
   dbgOut.tprint(1, "READING ADJACENCIES\n");
   for (int i = 0; i < fileInfo->num_elem_desc; ++i) {
-    if (fileInfo->elems[i].have_adj &&
-        idMap.intersects(fileInfo->elems[i].desc.start_id, fileInfo->elems[i].desc.count)) {
+    if (fileInfo->elems[i].have_adj  /*&&
+        idMap.intersects(fileInfo->elems[i].desc.start_id, fileInfo->elems[i].desc.count) */) {
       mpe_event.start("reading adjacencies for ", fileInfo->elems[i].handle);
       long len;
       hid_t th = mhdf_openAdjacency(filePtr, fileInfo->elems[i].handle, &len, &status);
@@ -1047,6 +1098,9 @@ ErrorCode ReadHDF5::load_file_partial(const ReaderIface::IDTag* subset_list,
         MB_SET_ERR(rval, "ReadHDF5 Failure");
     }
   }
+
+  if (cputime)
+   _times[ADJACENCY_TIME] = timer->time_elapsed();
 
   // If doing ELEMENTS=SIDES then we need to delete any entities
   // that we read that aren't actually sides (e.g. an interior face
@@ -1063,6 +1117,9 @@ ErrorCode ReadHDF5::load_file_partial(const ReaderIface::IDTag* subset_list,
       MB_SET_ERR(rval, "ReadHDF5 Failure");
   }
 
+  if (cputime)
+   _times[DELETE_NON_SIDEELEM_TIME] = timer->time_elapsed();
+
   debug_barrier();
   dbgOut.tprint(1, "READING SETS\n");
 
@@ -1077,6 +1134,9 @@ ErrorCode ReadHDF5::load_file_partial(const ReaderIface::IDTag* subset_list,
     if (MB_SUCCESS != rval)
       MB_SET_ERR(rval, "ReadHDF5 Failure");
   }
+
+  if (cputime)
+   _times[READ_SET_IDS_RECURS_TIME] = timer->time_elapsed();
 
   dbgOut.tprint(1, "  doing find_sets_containing\n");
   mpe_event.start("finding sets containing any read entities");
@@ -1094,6 +1154,10 @@ ErrorCode ReadHDF5::load_file_partial(const ReaderIface::IDTag* subset_list,
   mpe_event.end(rval);
   if (MB_SUCCESS != rval)
     MB_SET_ERR(rval, "ReadHDF5 Failure");
+
+  if (cputime)
+     _times[FIND_SETS_CONTAINING_TIME] = timer->time_elapsed();
+
   // Now actually read all set data and instantiate sets in MOAB.
   // Get any contained sets out of file_ids.
   mpe_event.start("reading set contents/parents/children");
@@ -1106,6 +1170,9 @@ ErrorCode ReadHDF5::load_file_partial(const ReaderIface::IDTag* subset_list,
   if (MB_SUCCESS != rval)
     MB_SET_ERR(rval, "ReadHDF5 Failure");
 
+  if (cputime)
+   _times[READ_SETS_TIME] = timer->time_elapsed();
+
   dbgOut.tprint(1, "READING TAGS\n");
 
   for (int i = 0; i < fileInfo->num_tag_desc; ++i) {
@@ -1114,6 +1181,9 @@ ErrorCode ReadHDF5::load_file_partial(const ReaderIface::IDTag* subset_list,
     if (MB_SUCCESS != rval)
       MB_SET_ERR(rval, "ReadHDF5 Failure");
   }
+
+  if (cputime)
+   _times[READ_TAGS_TIME] = timer->time_elapsed();
 
   dbgOut.tprint(1, "PARTIAL READ COMPLETE.\n");
 
@@ -3137,6 +3207,8 @@ ErrorCode ReadHDF5::read_sparse_tag(Tag tag_handle,
                                            id_table, base_offset,
                                            offset_range, handle_range,
                                            handle_vect);
+  if (MB_SUCCESS != rval)
+    MB_SET_ERR(MB_FAILURE, "ReadHDF5 Failure");
 
   DataType mbtype;
   rval = iFace->tag_get_data_type(tag_handle, mbtype);
@@ -3420,16 +3492,16 @@ ErrorCode ReadHDF5::read_qa(EntityHandle)
   CHECK_OPEN_HANDLES;
 
   mhdf_Status status;
-  std::vector<std::string> qa_list;
+  //std::vector<std::string> qa_list;
 
   int qa_len;
   char** qa = mhdf_readHistory(filePtr, &qa_len, &status);
   if (mhdf_isError(&status)) {
     MB_SET_ERR(MB_FAILURE, mhdf_message(&status));
   }
-  qa_list.resize(qa_len);
+  //qa_list.resize(qa_len);
   for (int i = 0; i < qa_len; i++) {
-    qa_list[i] = qa[i];
+    //qa_list[i] = qa[i];
     free(qa[i]);
   }
   free(qa);
@@ -3756,6 +3828,44 @@ ErrorCode ReadHDF5::read_tag_values_all(int tag_index,
   }
 
   return MB_SUCCESS;
+}
+void ReadHDF5::print_times()
+{
+#ifdef MOAB_HAVE_MPI
+  if (!myPcomm) {
+    double recv[NUM_TIMES];
+    MPI_Reduce((void*)_times, recv, NUM_TIMES, MPI_DOUBLE, MPI_MAX, 0, myPcomm->proc_config().proc_comm());
+    for (int i=0; i<NUM_TIMES; i++)
+      _times[i]=recv[i]; // just get the max from all of them
+  }
+  if (0==myPcomm->proc_config().proc_rank() )
+  {
+#endif
+
+    std::cout << "ReadHDF5:             " << _times[TOTAL_TIME] << std::endl
+              << "  get set meta        " << _times[SET_META_TIME] << std::endl
+              << "  partial subsets     " << _times[SUBSET_IDS_TIME] << std::endl
+              << "  partition time      " << _times[GET_PARTITION_TIME] << std::endl
+              << "  get set ids         " << _times[GET_SET_IDS_TIME] << std::endl
+              << "  set contents        " << _times[GET_SET_CONTENTS_TIME] << std::endl
+              << "  polyhedra           " << _times[GET_POLYHEDRA_TIME] << std::endl
+              << "  elements            " << _times[GET_ELEMENTS_TIME] << std::endl
+              << "  nodes               " << _times[GET_NODES_TIME] << std::endl
+              << "  node adjacency      " << _times[GET_NODEADJ_TIME] << std::endl
+              << "  side elements       " << _times[GET_SIDEELEM_TIME] << std::endl
+              << "  update connectivity " << _times[UPDATECONN_TIME] << std::endl
+              << "  adjacency           " << _times[ADJACENCY_TIME] << std::endl
+              << "  delete non_adj      "  << _times[DELETE_NON_SIDEELEM_TIME] << std::endl
+              << "  recursive sets      " << _times[READ_SET_IDS_RECURS_TIME] << std::endl
+              << "  find contain_sets   " << _times[FIND_SETS_CONTAINING_TIME] << std::endl
+              << "  read sets           " << _times[READ_SETS_TIME] << std::endl
+              << "  read tags           " << _times[READ_TAGS_TIME] << std::endl
+              << "  store file ids      " << _times[STORE_FILE_IDS_TIME] << std::endl
+              << "  read qa records     " << _times[READ_QA_TIME] << std::endl;
+
+#ifdef MOAB_HAVE_MPI
+  }
+#endif
 }
 
 } // namespace moab

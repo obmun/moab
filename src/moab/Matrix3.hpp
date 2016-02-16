@@ -23,18 +23,15 @@
 #ifndef MOAB_MATRIX3_HPP
 #define MOAB_MATRIX3_HPP
 
-#include "moab/Types.hpp"
-//#include "moab/EigenDecomp.hpp"
 #include <iostream>
-#include "moab/CartVect.hpp"
-
 #include <iosfwd>
 #include <limits>
-#include <float.h>
-#include <assert.h>
-#ifdef _MSC_VER
-# define finite _finite
-#endif
+#include <cmath>
+#include <cassert>
+
+#include "moab/Util.hpp"
+#include "moab/Types.hpp"
+#include "moab/CartVect.hpp"
 
 namespace moab {
 
@@ -142,7 +139,8 @@ namespace Matrix{
 	template< typename Matrix, typename Vector>
 	ErrorCode EigenDecomp( const Matrix & _a,
 	                       double w[3],
-	                       Vector v[3] ) {
+	                       Vector o[3] ) {
+	  Vector v[3];
 	  const int MAX_ROTATIONS = 20;
 	  const double one_ninth = 1./9;
 	  int i, j, k, iq, ip, numPos;
@@ -256,6 +254,14 @@ namespace Matrix{
 	      for(i=0; i<3; i++) { v[i][j] *= -1.0; }
 	    }
 	  }
+
+	  //transpose the vector array for output
+	  for(i=0; i<3; i++)
+	    {
+	    for(j=0; j<3; j++)
+	      { o[i][j]=v[j][i]; }
+	    }
+
 	  return MB_SUCCESS;
 	}
 } //namespace Matrix
@@ -412,7 +418,7 @@ inline Matrix3( double v00, double v01, double v02,
   
   inline bool invert() {
     double i = 1.0 / determinant();
-    if (!finite(i) || fabs(i) < std::numeric_limits<double>::epsilon())
+    if (!Util::is_finite(i) || fabs(i) < std::numeric_limits<double>::epsilon())
       return false;
     *this = inverse( i );
     return true;

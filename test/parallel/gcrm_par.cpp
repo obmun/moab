@@ -429,7 +429,7 @@ void read_mesh_parallel(bool rcbzoltan)
   std::cout << "proc: " << rank << " verts:" << verts_num << "\n";
 
   int total_verts_num;
-  MPI_Reduce(&verts_num, &total_verts_num, 1, MPI_INTEGER, MPI_SUM, 0, pcomm->proc_config().proc_comm());
+  MPI_Reduce(&verts_num, &total_verts_num, 1, MPI_INT, MPI_SUM, 0, pcomm->proc_config().proc_comm());
   if (0 == rank) {
     std::cout << "total vertices: " << total_verts_num << "\n";
     CHECK_EQUAL(1280, total_verts_num);
@@ -438,7 +438,7 @@ void read_mesh_parallel(bool rcbzoltan)
   std::cout << "proc: " << rank << " edges:" << edges_num << "\n";
 
   int total_edges_num;
-  MPI_Reduce(&edges_num, &total_edges_num, 1, MPI_INTEGER, MPI_SUM, 0, pcomm->proc_config().proc_comm());
+  MPI_Reduce(&edges_num, &total_edges_num, 1, MPI_INT, MPI_SUM, 0, pcomm->proc_config().proc_comm());
   if (0 == rank) {
     std::cout << "total edges: " << total_edges_num << "\n";
     CHECK_EQUAL(1920, total_edges_num);
@@ -447,7 +447,7 @@ void read_mesh_parallel(bool rcbzoltan)
   std::cout << "proc: " << rank << " cells:" << cells_num << "\n";
 
   int total_cells_num;
-  MPI_Reduce(&cells_num, &total_cells_num, 1, MPI_INTEGER, MPI_SUM, 0, pcomm->proc_config().proc_comm());
+  MPI_Reduce(&cells_num, &total_cells_num, 1, MPI_INT, MPI_SUM, 0, pcomm->proc_config().proc_comm());
   if (0 == rank) {
     std::cout << "total cells: " << total_cells_num << "\n";
     CHECK_EQUAL(642, total_cells_num);
@@ -521,6 +521,7 @@ void gather_one_cell_var(int gather_set_rank)
     // Get gather set cells
     Range gather_set_cells;
     rval = mb.get_entities_by_type(gather_set, MBPOLYGON, gather_set_cells);
+    CHECK_ERR(rval);
     CHECK_EQUAL((size_t)642, gather_set_cells.size());
     CHECK_EQUAL((size_t)1, gather_set_cells.psize());
 
@@ -529,6 +530,7 @@ void gather_one_cell_var(int gather_set_rank)
                                 gather_set_cells[321], gather_set_cells[641]};
     double vorticity0_val[4 * layers];
     rval = mb.tag_get_data(vorticity_tag0, &cell_ents[0], 4, vorticity0_val);
+    CHECK_ERR(rval);
 
     // Only check first two layers
     // Layer 0

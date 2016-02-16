@@ -31,16 +31,15 @@ static ErrorCode not_found(const std::string& name, EntityHandle h)
 {
   // MB_TAG_NOT_FOUND could be a non-error condition, do not call MB_SET_ERR on it
   // Print warning messages for debugging only
-  bool mydebug = false;
-  if (mydebug) {
-    if (h)
-      fprintf(stderr, "[Warning]: No sparse tag %s value for %s %lu\n",
-                      name.c_str(),
-                      CN::EntityTypeName(TYPE_FROM_HANDLE(h)),
-                      (unsigned long)ID_FROM_HANDLE(h));
-    else
-      fprintf(stderr, "[Warning]: No sparse tag %s value for root set\n", name.c_str());
-  }
+#if 0
+  if (h)
+    fprintf(stderr, "[Warning]: No sparse tag %s value for %s %lu\n",
+        name.c_str(),
+        CN::EntityTypeName(TYPE_FROM_HANDLE(h)),
+        (unsigned long)ID_FROM_HANDLE(h));
+  else
+    fprintf(stderr, "[Warning]: No sparse tag %s value for root set\n", name.c_str());
+#endif
 
   return MB_TAG_NOT_FOUND;
 }
@@ -373,8 +372,10 @@ ErrorCode SparseTag::tag_iterate(SequenceManager* seqman,
   rval = get_data_ptr(*iter, ptr);
   if (MB_SUCCESS == rval) 
     data_ptr = const_cast<void*>(ptr);
-  else if (get_default_value() && allocate)
+  else if (get_default_value() && allocate) {
     ptr = allocate_data(*iter, mData.end());
+    data_ptr = const_cast<void*>(ptr);
+  }
   else {
     // If allocation was not requested, need to increment the iterator so that
     // the count can be computed properly
@@ -419,7 +420,6 @@ void get_tagged(const SparseTag::MapType& mData,
                 Range::const_iterator end,
                 Container& output_range)
 {
-  SparseTag::MapType::const_iterator iter;
   typename Container::iterator hint = output_range.begin();
   for (Range::const_iterator i = begin; i != end; ++i)
     if (mData.find(*i) != mData.end())

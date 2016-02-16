@@ -5,10 +5,15 @@ LDADD = $(top_builddir)/src/libMOAB.la
 
 MESHDIR = $(abs_top_srcdir)/MeshFiles/unittest
 
-AM_CPPFLAGS += -DIS_BUILDING_MB \
-               -DSRCDIR=$(srcdir) \
-               -DMESHDIR=$(MESHDIR) \
-               -I. \
+DEFS += -DIS_BUILDING_MB \
+				-DSRCDIR=$(srcdir) \
+        -DMESHDIR=$(MESHDIR)
+
+FCDEFS += $(FC_DEFINE)IS_BUILDING_MB \
+					$(FC_DEFINE)SRCDIR=$(srcdir) \
+          $(FC_DEFINE)MESHDIR=$(MESHDIR) 
+
+AM_CPPFLAGS  = -I. \
                -I.. -I$(srcdir)/.. \
                -I$(top_builddir)/src \
                -I$(top_srcdir)/src \
@@ -33,14 +38,14 @@ TESTS = pcomm_unit \
         scdtest \
         pcomm_serial \
 	par_spatial_locator_test \
+	parallel_unit_tests \
         $(NETCDF_TESTS) \
         $(HDF5_TESTS) \
         $(MBCSLAM_TESTS) $(IMESH_TESTS)
 
 if HAVE_HDF5_PARALLEL
   HDF5_TESTS = parallel_hdf5_test mhdf_parallel parallel_write_test \
-        parallel_unit_tests \
-        uber_parallel_test parallel_adj parmerge_test
+        uber_parallel_test parallel_adj parmerge_test augment_with_ghosts
 else
   HDF5_TESTS = 
 endif
@@ -75,10 +80,10 @@ if ENABLE_imesh
 if HAVE_HDF5_PARALLEL
 if ENABLE_FORTRAN
    IMESH_TESTS += imeshp_test
-   AM_FCFLAGS += -I$(top_srcdir)/itaps \
-                 -I$(top_srcdir)/itaps/imesh \
-                 -I$(top_builddir)/itaps \
-                 -I$(top_builddir)/itaps/imesh
+   FCFLAGS += -I$(top_srcdir)/itaps \
+              -I$(top_srcdir)/itaps/imesh \
+              -I$(top_builddir)/itaps \
+              -I$(top_builddir)/itaps/imesh
 endif
 endif 
 endif
@@ -111,12 +116,13 @@ write_nc_par_SOURCES = ../io/write_nc.cpp
 par_spatial_locator_test_SOURCES = par_spatial_locator_test.cpp
 parallel_adj_SOURCES = ../adj_moab_test.cpp
 parmerge_test_SOURCES = parmerge_test.cpp
+augment_with_ghosts_SOURCES = augment_with_ghosts.cpp
 
 if ENABLE_imesh
 if HAVE_HDF5_PARALLEL
 if ENABLE_FORTRAN
   imeshp_test_SOURCES = imeshp_test.F90
-  imeshp_test_LDADD =   $(top_builddir)/itaps/imesh/libiMesh.la $(LDADD) ${MOAB_CXX_LINKFLAGS} ${MOAB_CXX_LIBS}
+  imeshp_test_LDADD =   $(top_builddir)/itaps/imesh/libiMesh.la $(LDADD) ${MOAB_CXX_LINKFLAGS} ${MOAB_CXX_LIBS} $(FCLIBS)
 endif
 endif
 endif
@@ -155,4 +161,23 @@ MOSTLYCLEANFILES = mhdf_ll.h5m tmp0.h5m tmp1.h5m tmp2.h5m tmp3.h5m \
                    test_par_mpas_vars.nc \
                    test2.h5m  \
                    testpm.h5m \
-                   newfile.h5m
+                   newfile.h5m \
+                   TaskMesh_n2.0.h5m \
+                   TaskMesh_n2.1.h5m \
+                   testReadGhost_n2.0.h5m \
+                   testReadGhost_n2.1.h5m
+
+FORTDEFS = $(FCDEFS) 
+PPFCCOMPILE = $(FC) $(FORTDEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+    $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_FCFLAGS) $(FCFLAGS)
+LTPPFCCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
+    $(LIBTOOLFLAGS) --mode=compile $(FC) $(FCDEFS) \
+    $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+    $(AM_FCFLAGS) $(FCFLAGS)
+PPF77COMPILE = $(F77) $(FORTDEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+   $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS)
+LTPPF77COMPILE = $(LIBTOOL) $(AM_V_lt) --tag=F77 $(AM_LIBTOOLFLAGS) \
+   $(LIBTOOLFLAGS) --mode=compile $(F77) $(FCDEFS) \
+   $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+   $(AM_FFLAGS) $(FFLAGS)
+

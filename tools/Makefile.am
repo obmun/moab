@@ -1,10 +1,9 @@
 AUTOMAKE_OPTIONS = foreign
-AM_CPPFLAGS += -I$(top_srcdir)/src \
+AM_CPPFLAGS =  -I$(top_srcdir)/src \
                -I$(top_builddir)/src \
                -I$(top_srcdir)/src/parallel \
-	       -I$(top_srcdir)/itaps \
-	       -I$(top_builddir)/itaps/imesh \
-               -I$(top_builddir)/src/parallel
+               -I$(top_srcdir)/itaps \
+               -I$(top_builddir)/itaps/imesh
 
 LDADD = $(top_builddir)/src/libMOAB.la
 if ENABLE_imesh
@@ -30,7 +29,6 @@ EXTRA_DIST = README.hexmodops \
              README.mbsurfplot \
              README.mbtagprop \
              README.spheredecomp
-
 
 if ENABLE_mbconvert
   bin_PROGRAMS += mbconvert
@@ -98,6 +96,9 @@ if ENABLE_mbpart
   AM_LDFLAGS += $(ZOLTAN_LIB_FLAGS)
   mbpart_SOURCES = mbpart.cpp
   mbpart_LDADD = $(top_builddir)/src/libMOAB.la $(ZOLTAN_LIBS)
+if HAVE_CGM
+  mbpart_LDADD += $(CGM_LIBS)
+endif 
 else
 if ENABLE_metis
   bin_PROGRAMS += mbpart
@@ -106,12 +107,6 @@ if ENABLE_metis
   mbpart_SOURCES = mbpart.cpp
   mbpart_LDADD = $(top_builddir)/src/libMOAB.la $(METIS_LIBS)
 endif
-endif
-
-if ENABLE_qvdual
-  qvdual_DIR = qvdual
-else
-  qvdual_DIR=
 endif
 
 if ENABLE_mcnpmit
@@ -148,6 +143,10 @@ if ENABLE_mbumr
   bin_PROGRAMS += mbumr
 endif
 
+if ENABLE_mbmerge
+  bin_PROGRAMS += mbmerge
+endif
+
 noinst_PROGRAMS = $(parread)
 
 SUBDIRS = . \
@@ -155,12 +154,12 @@ SUBDIRS = . \
           $(mbcoupler_DIR) \
           $(mbcslam_DIR) \
           $(mbzoltan_DIR) \
-	  $(mcnpmit_DIR) \
-          $(qvdual_DIR) \
-	  $(vtkMOABReader_DIR) \
+          $(mcnpmit_DIR) \
+          $(vtkMOABReader_DIR) \
           $(dagmc_DIR) 
 
 mbconvert_SOURCES = convert.cpp
+mbmerge_SOURCES = merge.cpp
 mbgsets_SOURCES = gsets.cc
 hexmodops_SOURCES = makeops.cpp
 mbsize_SOURCES = measure.cpp measure.hpp size.cpp

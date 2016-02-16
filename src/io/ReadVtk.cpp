@@ -104,7 +104,8 @@ public:
   {
     Hash h(bytes, len);
     EntityHandle mset = this->congruence_class(h, bytes);
-    this->mesh->add_entities(mset, &ent, 1);
+    ErrorCode rval;
+    rval = this->mesh->add_entities(mset, &ent, 1);MB_CHK_SET_ERR_RET(rval, "Failed to add entities to mesh");
   }
 
   void add_entities(Range& range, const unsigned char* bytes, size_t bytes_per_ent)
@@ -112,7 +113,8 @@ public:
     for (Range::iterator it = range.begin(); it != range.end(); ++it, bytes += bytes_per_ent) {
       Hash h(bytes, bytes_per_ent);
       EntityHandle mset = this->congruence_class(h, bytes);
-      this->mesh->add_entities(mset, &*it, 1);
+      ErrorCode rval;
+      rval = this->mesh->add_entities(mset, &*it, 1);MB_CHK_SET_ERR_RET(rval, "Failed to add entities to mesh");
     }
   }
 
@@ -122,13 +124,14 @@ public:
     if (it == this->end()) {
       EntityHandle mset;
       Range preexist;
-      this->mesh->get_entities_by_type_and_tag(0, MBENTITYSET, &this->tag, &tag_data, 1, preexist);
+      ErrorCode rval;
+      rval = this->mesh->get_entities_by_type_and_tag(0, MBENTITYSET, &this->tag, &tag_data, 1, preexist);MB_CHK_SET_ERR_RET_VAL(rval, "Failed to get entities by type and tag", (EntityHandle) 0);
       if (preexist.size()) {
         mset = *preexist.begin();
       }
       else {
-        this->mesh->create_meshset(MESHSET_SET, mset);
-        this->mesh->tag_set_data(this->tag, &mset, 1, tag_data);
+        rval = this->mesh->create_meshset(MESHSET_SET, mset);MB_CHK_SET_ERR_RET_VAL(rval, "Failed to create mesh set", (EntityHandle) 0);
+        rval = this->mesh->tag_set_data(this->tag, &mset, 1, tag_data);MB_CHK_SET_ERR_RET_VAL(rval, "Failed to set tag data", (EntityHandle) 0);
       }
       (*this)[h] = mset;
       return mset;
@@ -147,7 +150,7 @@ ReaderIface* ReadVtk::factory(Interface* iface)
 }
 
 ReadVtk::ReadVtk(Interface* impl)
-  : mdbImpl(impl), mCurrentMeshHandle(0), mPartitionTagName(MATERIAL_SET_TAG_NAME)
+  : mdbImpl(impl), mPartitionTagName(MATERIAL_SET_TAG_NAME)
 {
   mdbImpl->query_interface(readMeshIface);
 }
@@ -551,7 +554,6 @@ ErrorCode ReadVtk::vtk_read_polydata(FileTokenizer& tokens,
 {
   ErrorCode result;
   long num_verts;
-  std::vector<int> connectivity;
   const char* const poly_data_names[] = {"VERTICES",
                                          "LINES",
                                          "POLYGONS",
@@ -984,11 +986,7 @@ ErrorCode ReadVtk::vtk_read_tag_data(FileTokenizer& tokens,
   result = mdbImpl->tag_get_handle(name, per_elem, mb_type, handle,
                                    MB_TAG_DENSE | MB_TAG_CREAT);MB_CHK_SET_ERR(result, "Tag name conflict for attribute \"" << name << "\" at line " << tokens.line_number());
 
-  // Count number of entities
-  long count = 0;
   std::vector<Range>::iterator iter;
-  for (iter = entities.begin(); iter != entities.end(); ++iter)
-    count += iter->size();
 
   if (type == 1) {
     for (iter = entities.begin(); iter != entities.end(); ++iter) {

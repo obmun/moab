@@ -3,6 +3,7 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 
 # Things to build
 lib_LTLIBRARIES = libMOAB.la 
+AM_CPPFLAGS =
 
 # Subdirectories to build
 SUBDIRS =
@@ -52,6 +53,7 @@ libMOAB_la_SOURCES = \
   CN.cpp \
   CartVect.cpp \
   Core.cpp \
+  CoreOptions.hpp \
   DebugOutput.cpp \
   DebugOutput.hpp \
   DenseTag.hpp \
@@ -190,7 +192,6 @@ nobase_libMOAB_la_include_HEADERS = \
   moab/point_locater/parametrizer.hpp \
   moab/Matrix3.hpp \
   moab/MergeMesh.hpp \
-  moab/MeasureTime.hpp \
   moab/MeshTopoUtil.hpp \
   moab/MOABConfig.h \
   moab/OrientedBoxTreeTool.hpp \

@@ -2,10 +2,11 @@
 AUTOMAKE_OPTIONS = foreign
 
 # Things to build
-noinst_LTLIBRARIES = libRefineMesh.la
-         
+noinst_LTLIBRARIES = libRefineMesh.la         
+AM_CPPFLAGS =
+
 # Some variables
-AM_CPPFLAGS += -DIS_BUILDING_MB -DSRCDIR=$(srcdir) \
+AM_CPPFLAGS += -DIS_BUILDING_MB -DSRCDIR=$(srcdir) -DLOCDIR=src/RefineMesh/ \
                -I$(srcdir)/..  -I.. -I$(srcdir)/../moab -I$(srcdir)/moab \
 	       -I$(srcdir)/../parallel
 

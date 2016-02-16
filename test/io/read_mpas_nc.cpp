@@ -71,10 +71,11 @@ void test_read_all()
   ErrorCode rval = mb.load_file(example, NULL, opts.c_str());
   CHECK_ERR(rval);
 
-  int procs = 1;
 #ifdef MOAB_HAVE_MPI
   ParallelComm* pcomm = ParallelComm::get_pcomm(&mb, 0);
-  procs = pcomm->proc_config().proc_size();
+  int procs = pcomm->proc_config().proc_size();
+#else
+  int procs = 1;
 #endif
 
   // Make check runs this test on one processor
@@ -144,14 +145,7 @@ void test_read_all()
     rval = mb.get_entities_by_type(0, MBPOLYGON, cells);
     CHECK_ERR(rval);
     CHECK_EQUAL((size_t)642, cells.size());
-#ifdef MOAB_HAVE_MPI
-    // If MOAB is compiled parallel, sequence size requested are increased
-    // by a factor of 1.5, to allow for ghosts. This will introduce a gap
-    // between the two face sequences.
-    CHECK_EQUAL((size_t)2, cells.psize());
-#else
     CHECK_EQUAL((size_t)1, cells.psize());
-#endif
 
     // Check ke tag values on first pentagon and first hexagon
     EntityHandle cell_ents[] = {cells[0], cells[12]};
@@ -179,10 +173,11 @@ void test_read_onevar()
   ErrorCode rval = mb.load_file(example, NULL, opts.c_str());
   CHECK_ERR(rval);
 
-  int procs = 1;
 #ifdef MOAB_HAVE_MPI
   ParallelComm* pcomm = ParallelComm::get_pcomm(&mb, 0);
-  procs = pcomm->proc_config().proc_size();
+  int procs = pcomm->proc_config().proc_size();
+#else
+  int procs = 1;
 #endif
 
   // Make check runs this test on one processor
@@ -199,15 +194,7 @@ void test_read_onevar()
     rval = mb.get_entities_by_type(0, MBPOLYGON, cells);
     CHECK_ERR(rval);
     CHECK_EQUAL((size_t)642, cells.size());
-
-#ifdef MOAB_HAVE_MPI
-    // If MOAB is compiled parallel, sequence size requested are increased
-    // by a factor of 1.5, to allow for ghosts. This will introduce a gap
-    // between the two face sequences.
-    CHECK_EQUAL((size_t)2, cells.psize());
-#else
     CHECK_EQUAL((size_t)1, cells.psize());
-#endif
 
     // Check ke tag values on 4 cells: first pentagon, last pentagon,
     // first hexagon, and last hexagon
@@ -344,10 +331,11 @@ void test_read_novars()
   // Tag ke1 should exist at this time
   CHECK_ERR(rval);
 
-  int procs = 1;
 #ifdef MOAB_HAVE_MPI
   ParallelComm* pcomm = ParallelComm::get_pcomm(&mb, 0);
-  procs = pcomm->proc_config().proc_size();
+  int procs = pcomm->proc_config().proc_size();
+#else
+  int procs = 1;
 #endif
 
   // Make check runs this test on one processor
@@ -357,15 +345,7 @@ void test_read_novars()
     rval = mb.get_entities_by_type(file_set, MBPOLYGON, cells);
     CHECK_ERR(rval);
     CHECK_EQUAL((size_t)642, cells.size());
-
-#ifdef MOAB_HAVE_MPI
-    // If MOAB is compiled parallel, sequence size requested are increased
-    // by a factor of 1.5, to allow for ghosts. This will introduce a gap
-    // between the two face sequences.
-    CHECK_EQUAL((size_t)2, cells.psize());
-#else
     CHECK_EQUAL((size_t)1, cells.psize());
-#endif
 
     // Check ke tag values on 4 cells: first pentagon, last pentagon,
     // first hexagon, and last hexagon
@@ -400,10 +380,11 @@ void test_read_no_mixed_elements()
   ErrorCode rval = mb.load_file(example, NULL, opts.c_str());
   CHECK_ERR(rval);
 
-  int procs = 1;
 #ifdef MOAB_HAVE_MPI
   ParallelComm* pcomm = ParallelComm::get_pcomm(&mb, 0);
-  procs = pcomm->proc_config().proc_size();
+  int procs = pcomm->proc_config().proc_size();
+#else
+  int procs = 1;
 #endif
 
   // Make check runs this test on one processor
@@ -517,7 +498,7 @@ void test_gather_onevar()
     rval = mb.get_entities_by_type(gather_set, MBPOLYGON, gather_set_cells);
     CHECK_ERR(rval);
     CHECK_EQUAL((size_t)642, gather_set_cells.size());
-    CHECK_EQUAL((size_t)2, gather_set_cells.psize());
+    CHECK_EQUAL((size_t)1, gather_set_cells.psize());
 
     // Check ke0 tag values on 4 gather set cells: first pentagon, last pentagon,
     // first hexagon, and last hexagon

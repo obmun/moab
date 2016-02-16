@@ -5,7 +5,7 @@ AUTOMAKE_OPTIONS = foreign
 noinst_LTLIBRARIES = libMOABpar.la
          
 # Some variables
-AM_CPPFLAGS += -DIS_BUILDING_MB -DSRCDIR=$(srcdir) -DLOCDIR=src/parallel/ \
+AM_CPPFLAGS  = -DIS_BUILDING_MB -DSRCDIR=$(srcdir) -DLOCDIR=src/parallel/ \
                -I$(srcdir)/.. -I.. -I$(srcdir)/../io \
                -I$(srcdir)/../io/mhdf/include 
 
@@ -50,8 +50,7 @@ if PARALLEL
 
 if HAVE_HDF5_PARALLEL
 #  libMOABpar_la_LIBADD = $(top_builddir)/mhdf/libmhdf.la
-  MOAB_PARALLEL_SRCS += WriteHDF5Parallel.cpp 
-  MOAB_PARALLEL_HDRS += WriteHDF5Parallel.hpp
+  MOAB_PARALLEL_SRCS += WriteHDF5Parallel.cpp WriteHDF5Parallel.hpp
 endif
 
 endif

@@ -23,16 +23,14 @@
 #include "moab/Range.hpp"
 #include "Internals.hpp"
 #include "moab/BSPTreePoly.hpp"
+#include "moab/Util.hpp"
 
 #include <assert.h>
 #include <string.h>
 #include <algorithm>
 #include <limits>
 
-#if defined(_MSC_VER) || defined(__MINGW32__)
-#  include <float.h>
-#  define finite(A) _finite(A)
-#elif defined(HAVE_IEEEFP_H)
+#if defined(MOAB_HAVE_IEEEFP_H)
 #  include <ieeefp.h>
 #endif
 
@@ -164,7 +162,7 @@ ErrorCode BSPTree::set_split_plane( EntityHandle node, const Plane& p )
   p2.coeff   *= inv_len;
   
     // check for zero-length normal
-  if (!finite(p2.norm[0]+p2.norm[1]+p2.norm[2]+p2.coeff))
+  if (!Util::is_finite(p2.norm[0]+p2.norm[1]+p2.norm[2]+p2.coeff))
     return MB_FAILURE;
 
     // store plane
@@ -398,7 +396,7 @@ ErrorCode BSPTree::merge_leaf( BSPTreeIter& iter )
       return rval;
     
     iter.childVect.clear();
-    moab()->get_child_meshsets( h, iter.childVect );
+    rval = moab()->get_child_meshsets( h, iter.childVect );MB_CHK_ERR(rval);
     if (!iter.childVect.empty()) {
      moab()->remove_child_meshset( h, iter.childVect[0] );
      moab()->remove_child_meshset( h, iter.childVect[1] );

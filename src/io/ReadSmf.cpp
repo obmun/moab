@@ -167,6 +167,7 @@ ErrorCode ReadSmf::load_file(const char *filename,
     return result;
 
   // Fill the arrays with data from _coords
+  // Cppcheck warning (false positive): variable arrays is assigned a value that is never used
   for (int i = 0; i < _numNodesInFile; i++) {
     int i3 = 3*i;
     arrays[0][i] = _coords[i3];
@@ -391,7 +392,7 @@ ErrorCode ReadSmf::face(std::vector<std::string> & argv)
   if (MB_SUCCESS != err)
     return err;
 
-  int vert[3];
+  int vert[3] = {};
   char* endptr;
   for (unsigned int i = 0; i < argv.size(); i++) {
     vert[i] = strtol(argv[i].c_str(), &endptr, 0);
