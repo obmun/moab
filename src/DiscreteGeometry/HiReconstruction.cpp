@@ -105,6 +105,10 @@ namespace moab
 		double *coeffs,*coords;
 		int *degree_out;
 		int ncoeffs = (degree+2)*(degree+1)/2;
+
+		//DBG
+		int dcount = 0;
+
 		for(Range::iterator ivert=_verts2rec.begin();ivert!=_verts2rec.end();++ivert){
 			int index = _verts2rec.index(*ivert);
 			size_t istr = _vertID2coeffID[index];
@@ -112,9 +116,17 @@ namespace moab
 			coeffs = &(_local_fit_coeffs[istr]);
 			degree_out = &(_degrees_out[index]);
 			_interps[index] = interp;
-			error  = polyfit3d_walf_surf_vertex(*ivert,interp,degree,_MINPNTS,safeguard,9,coords,degree_out,ncoeffs,coeffs);
-			MB_CHK_ERR(error);
+			error  = polyfit3d_walf_surf_vertex(*ivert,interp,degree,_MINPNTS,safeguard,9,coords,degree_out,ncoeffs,coeffs);MB_CHK_ERR(error);
+
+			//DBG
+			if (degree_out[0] < degree)
+			  dcount += 1;
+
 		}
+
+		//DBG
+		std::cout<<"Total #points ="<<_verts2rec.size()<<", #degraded points = "<<dcount<<std::endl;
+
 		_geom = HISURFACE;
 		_hasfittings = true;
 		return error;
@@ -212,6 +224,7 @@ namespace moab
 		assert(_dim==2);
 		ErrorCode error;
 		int ring = estimate_num_rings(degree,interp);
+		//std::cout<<"ring = "<<ring<<std::endl;
 		//get n-ring neighbors
 		Range ngbvs;
 		error = obtain_nring_ngbvs(vid,ring,minpnts,ngbvs); MB_CHK_ERR(error);
@@ -444,7 +457,9 @@ namespace moab
 	 ****************************************************************/
 
 	 int HiReconstruction::estimate_num_rings(int degree, bool interp){
-	 	return interp?((degree+1)>>1)+((degree+1)&1):((degree+2)>>1)+((degree+2)&1);
+		//return interp?((degree+1)>>1)+((degree+1)&1):((degree+2)>>1)+((degree+2)&1);
+	   return interp?((degree+1)>>1):((degree+2)>>1);
+
 	 }
 
 	 ErrorCode HiReconstruction::obtain_nring_ngbvs(const EntityHandle vid, int ring, const int minpnts, Range& ngbvs){
@@ -480,7 +495,7 @@ namespace moab
 	 				}
 	 			}
 	 		}
-	 		if(_MAXPNTS<=ngbvs.size()){
+			if(_MAXPNTS<=(int)ngbvs.size()){
 	 			//obtain enough points
 	 			return error;
 	 		}
@@ -488,7 +503,7 @@ namespace moab
 	 			//current ring cannot introduce any points, return incase deadlock
 	 			return error;
 	 		}
-	 		if(i==ring&&minpnts>ngbvs.size()){
+			if((i==ring)&& (minpnts>(int)ngbvs.size())){
 	 			//reach maximum ring but not enough points
 	 			++ring;
 	 		}
@@ -572,12 +587,14 @@ namespace moab
 	 	}
 	 }
 
-	 ErrorCode HiReconstruction::set_geom_data_surf(const EntityHandle vid, const double* coords, const double degree_out, const double* coeffs, bool interp){
-
+	 ErrorCode HiReconstruction::set_geom_data_surf(const EntityHandle vid, const double* coords, const double degree_out, const double* coeffs, bool interp)
+	 {
+	   return MB_SUCCESS;
 	 }
 
-	 ErrorCode HiReconstruction::set_geom_data_3Dcurve(const EntityHandle vid, const double* coords, const double degree_out, const double* coeffs, bool interp){
-
+	 ErrorCode HiReconstruction::set_geom_data_3Dcurve(const EntityHandle vid, const double* coords, const double degree_out, const double* coeffs, bool interp)
+	 {
+	   return MB_SUCCESS;
 	 }
 
    /*********************************************************
@@ -739,6 +756,9 @@ namespace moab
 	 	if(nverts<=0){
 	 		return;
 	 	}
+
+		//std::cout<<"npnts in initial stencil = "<<nverts<<std::endl;
+
 	 	//step 1. copmute local coordinate system
 	 	double nrm[3] = {ngbnrms[0],ngbnrms[1],ngbnrms[2]}, tang1[3] = {0,0,0}, tang2[3] = {0,0,0};
 	 	if(abs(nrm[0])>abs(nrm[1])&&abs(nrm[0])>abs(nrm[2])){
@@ -811,6 +831,8 @@ namespace moab
 	 		bs = realloc(bs,npts2fit*sizeof(double));
 	 		ws = realloc(ws,npts2fit*sizeof(double));*/
 	 	}
+
+		//std::cout<<"npnts after weighting = "<<npts2fit<<std::endl;
 
 	 	//step 5. fitting
 	 	eval_vander_bivar_cmf(npts2fit,&(us[0]),1,&(bs[0]),degree,&(ws[0]),interp,safeguard,degree_out,degree_pnt,degree_qr);
@@ -888,8 +910,31 @@ namespace moab
 	 	}
 	 	*degree_qr = degree;
 
+		/* DBG
+		 * std::cout<<"before Qtb"<<std::endl;
+		std::cout<<std::endl;
+		std::cout<<"bs = "<<std::endl;
+		std::cout<<std::endl;
+		for (int k=0; k< ndim; k++){
+		    for (int j=0; j<npts2fit; ++j){
+			std::cout<<"  "<<bs[npts2fit*k+j]<<std::endl;
+		      }
+		  }
+		std::cout<<std::endl;*/
+
 	 	//step 7. compute Q'b
 	 	Solvers::compute_qtransposeB(npts2fit,ncols_sub,&(V[0]),ndim,bs);
+
+		/* DBG
+		 * std::cout<<"after Qtb"<<std::endl;
+		std::cout<<"bs = "<<std::endl;
+		std::cout<<std::endl;
+		for (int k=0; k< ndim; k++){
+		    for (int j=0; j<npts2fit; ++j){
+			std::cout<<"  "<<bs[npts2fit*k+j]<<std::endl;
+		      }
+		  }
+		std::cout<<std::endl;*/
 
 	 	//step 8. perform backward substitution and scale the solution
 	 	//assign diagonals of V
@@ -899,7 +944,7 @@ namespace moab
 
 	 	//backsolve
 	 	if(safeguard){
-	 		Solvers::backsolve_polyfit_safeguarded(2,degree,interp,npts2fit,ncols,&(V[0]),ndim,bs,ws,degree_out);
+			Solvers::backsolve_polyfit_safeguarded(2,degree,npts2fit,ncols_sub,&(V[0]),ndim,bs,&(ts[0]),degree_out);
 	 	}else{
 	 		Solvers::backsolve(npts2fit,ncols_sub,&(V[0]),1,bs,&(ts[0]));
 	 		*degree_out = degree;
@@ -1065,7 +1110,7 @@ namespace moab
 	 	}
 	 	//backsolve
 	 	if(safeguard){
-	 		Solvers::backsolve_polyfit_safeguarded(1,degree,interp,npts2fit,ncols,&(V[0]),ndim,bs,ws,degree_out);
+			Solvers::backsolve_polyfit_safeguarded(1,degree,npts2fit,ncols,&(V[0]),ndim,bs,ws,degree_out);
 	 	}else{
 	 		Solvers::backsolve(npts2fit,ncols_sub,&(V[0]),ndim,bs,&(ts[0]));
 	 		*degree_out = degree;
