@@ -45,7 +45,7 @@ namespace moab
 	ErrorCode HiReconstruction::initialize(bool recwhole){
 		ErrorCode error;
 
-		ahf = new HalfFacetRep(mbImpl,pcomm,_mesh2rec);
+		ahf = new HalfFacetRep(mbImpl,pcomm,_mesh2rec, false);
 		if(!ahf){
 			return MB_MEMORY_ALLOCATION_FAILED;
 		}
@@ -279,7 +279,7 @@ namespace moab
 		//get connectivity table
 		std::vector<EntityHandle> elemconn;
 		error = mbImpl->get_connectivity(&elem,1,elemconn); MB_CHK_ERR(error);
-		if(nvpe!=elemconn.size()){
+		if(nvpe!=(int)elemconn.size()){
 			MB_SET_ERR(MB_FAILURE,"element connectivity table size doesn't match input size");
 		}
 
