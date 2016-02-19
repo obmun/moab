@@ -325,7 +325,7 @@ ErrorCode refine_entities(Interface *mb,  ParallelComm* pc, EntityHandle fset, i
   std::vector<EntityHandle> set;
 
   std::cout<<"Starting hierarchy generation"<<std::endl;
-  error = uref.generate_mesh_hierarchy( num_levels,level_degrees, set, false); CHECK_ERR(error);
+  error = uref.generate_mesh_hierarchy( num_levels,level_degrees, set, true); CHECK_ERR(error);
 
   std::cout<<"Finished hierarchy generation in "<<uref.timeall.tm_total<<"  secs"<<std::endl;
   #ifdef MOAB_HAVE_MPI
@@ -1243,7 +1243,8 @@ int main(int argc, char *argv[])
     else if (argc == 2)
       {
         const char* filename = argv[1];
-        int deg[4] = {2,3,2,3};
+   //     int deg[4] = {2,3,2,3};
+        int deg[1] = {2};
         int len = sizeof(deg) / sizeof(int);
         result = test_mesh(filename, deg, len);
         handle_error_code(result, number_tests_failed, number_tests_successful);
