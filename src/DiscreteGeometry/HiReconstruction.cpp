@@ -7,6 +7,7 @@
 #endif
 #include "MBTagConventions.hpp"
 
+#define HIREC_USE_AHF
 
 #include <math.h>
 #include <deque>
@@ -48,7 +49,7 @@ namespace moab
 	
 	#ifdef HIREC_USE_AHF
 		std::cout << "HIREC_USE_AHF: Initializing" << std::endl;
-		ahf = new HalfFacetRep(mbImpl,pcomm,_mesh2rec);
+		ahf = new HalfFacetRep(mbImpl,pcomm,_mesh2rec, false);
 		if(!ahf){
 			return MB_MEMORY_ALLOCATION_FAILED;
 		}
@@ -135,7 +136,7 @@ namespace moab
 		}
 
 		//DBG
-		std::cout<<"Total #points ="<<_verts2rec.size()<<", #degraded points = "<<dcount<<std::endl;
+		//std::cout<<"Total #points ="<<_verts2rec.size()<<", #degraded points = "<<dcount<<std::endl;
 
 		_geom = HISURFACE;
 		_hasfittings = true;
@@ -289,7 +290,7 @@ namespace moab
 		//get connectivity table
 		std::vector<EntityHandle> elemconn;
 		error = mbImpl->get_connectivity(&elem,1,elemconn); MB_CHK_ERR(error);
-		if(nvpe!=elemconn.size()){
+		if(nvpe!=(int)elemconn.size()){
 			MB_SET_ERR(MB_FAILURE,"element connectivity table size doesn't match input size");
 		}
 
@@ -476,7 +477,7 @@ namespace moab
 	 	ErrorCode error;
 	 	assert(elemdim==_dim);
 	 #ifdef HIREC_USE_AHF
-	 	error = mbImpl->get_up_adjacencies(vid,elemdim,adjents);
+	 	error = ahf->get_up_adjacencies(vid,elemdim,adjents);
 	 #else
 	 	error = mbImpl->get_adjacencies(&vid,1,elemdim,false,adjents); MB_CHK_ERR(error);
 	 #endif

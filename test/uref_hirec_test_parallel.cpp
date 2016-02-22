@@ -124,10 +124,10 @@ ErrorCode closedsurface_uref_hirec_convergence_study(const char* infile, std::ve
 #endif
 
 #ifdef MOAB_HAVE_MPI
-	//std::cout << "Mesh has " << nelems << " elements on Processor " << rank << " in total;";
-	//std::cout << elems_owned.size() << " of which are locally owned elements" << std::endl;
+	std::cout << "Mesh has " << nelems << " elements on Processor " << rank << " in total;";
+	std::cout << elems_owned.size() << " of which are locally owned elements" << std::endl;
 #else
-	//std::cout << "Mesh has " << nelems << " elements" << std::endl;
+	std::cout << "Mesh has " << nelems << " elements" << std::endl;
 #endif
 
 	/************************
@@ -270,16 +270,16 @@ ErrorCode closedsurface_uref_hirec_convergence_study(const char* infile, std::ve
 	geoml1errs.push_back(l1err); geoml2errs.push_back(l2err); geomlinferrs.push_back(linferr);
 	/*Perform high order projection and compute error*/
 	//initialize
+	HiReconstruction hirec(&moab,pc,meshset);
 	for(size_t ideg=0;ideg<degs2fit.size();++ideg){
 		//High order reconstruction
-		HiReconstruction hirec(&moab,pc,meshset);
 		error = hirec.reconstruct3D_surf_geom(degs2fit[ideg],interp,false,true); MB_CHK_ERR(error);
 		int index=0;
 		for(Range::iterator ielem=elems_owned.begin();ielem!=elems_owned.end();++ielem,++index){
 			//Projection
 			error = hirec.hiproj_walf_in_element(*ielem,nvpe,nsamples,&(testnaturalcoords[nvpe*nsamples*index]),&(testpnts[3*nsamples*index])); MB_CHK_ERR(error);
 		}
-		assert(index==elems_owned.size());
+		assert(index==(int) elems_owned.size());
 		//Estimate error
 		obj->compute_projecterror(3,elems_owned.size()*nsamples,&(testpnts[0]),l1err,l2err,linferr);
 		geoml1errs.push_back(l1err); geoml2errs.push_back(l2err); geomlinferrs.push_back(linferr);
@@ -392,16 +392,19 @@ int main(int argc, char *argv[]){
 		std::ostringstream convert; convert << i;
 		std::string infile = prefix+convert.str()+suffix;
 		int ntestverts; std::vector<double> geoml1errs,geoml2errs,geomlinferrs;
+
+#ifdef MOAB_HAVE_MPI
 		std::cout << "Processor " << rank << " is working on file " << infile << std::endl;
+#endif
 		error = closedsurface_uref_hirec_convergence_study(infile.c_str(),degs2fit,interp,dim,obj,ntestverts,geoml1errs,geoml2errs,geomlinferrs); MB_CHK_ERR(error);
 		assert(geoml1errs.size()==1+degs2fit.size()&&geoml2errs.size()==1+degs2fit.size()&&geomlinferrs.size()==1+degs2fit.size());
-	#ifdef MOAB_HAVE_MPI
+#ifdef MOAB_HAVE_MPI
 		if(nprocs>1){
 			int ntestverts_global = 0;
 			MPI_Reduce(&ntestverts,&ntestverts_global,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
 			for(size_t d=0;d<degs2fit.size()+1;++d){
 				double local_l1err = ntestverts*geoml1errs[d], local_l2err = geoml2errs[d]*(geoml2errs[d]*ntestverts), local_linferr = geomlinferrs[d];
-				std::cout << "On Processor " << rank << " with mesh " << i << " Degree = " << (d==0?0:degs2fit[d-1]) << " L1:" << geoml1errs[d] << " L2:" << geoml2errs[d] << " Li:" << geomlinferrs[d] << std::endl;
+				//std::cout << "On Processor " << rank << " with mesh " << i << " Degree = " << (d==0?0:degs2fit[d-1]) << " L1:" << geoml1errs[d] << " L2:" << geoml2errs[d] << " Li:" << geomlinferrs[d] << std::endl;
 				double global_l1err=0,global_l2err=0,global_linferr=0;
 				MPI_Reduce(&local_l1err,&global_l1err,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
 				MPI_Reduce(&local_l2err,&global_l2err,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
@@ -419,13 +422,13 @@ int main(int argc, char *argv[]){
 				geomlinferrs_global[d][i-begin] = geomlinferrs[d];
 			}
 		}
-	#else
+#else
 		for(size_t d=0;d<degs2fit.size()+1;++d){
 			geoml1errs_global[d][i-begin] = geoml1errs[d];
 			geoml2errs_global[d][i-begin] = geoml2errs[d];
 			geomlinferrs_global[d][i-begin] = geomlinferrs[d];
 		}
-	#endif
+#endif
 	}
 #ifdef MOAB_HAVE_MPI
 	if(rank==0){

@@ -220,7 +220,7 @@ namespace moab {
 
   void Solvers::backsolve(int mrows, int ncols, double *R, int bncols, double *bs, double *ws)
   {
-    std::cout.precision(16);
+   /* std::cout.precision(16);
     std::cout<<"Before backsolve  "<<std::endl;
     std::cout<<" V = "<<std::endl;
     for (int k=0; k< ncols; k++){
@@ -239,7 +239,7 @@ namespace moab {
             std::cout<<"  "<<bs[mrows*k+j]<<std::endl;
           }
       }
-    std::cout<<std::endl;
+    std::cout<<std::endl;*/
 
 
     for (int k=0; k< bncols; k++)
