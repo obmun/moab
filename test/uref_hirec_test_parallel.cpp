@@ -136,7 +136,7 @@ ErrorCode closedsurface_uref_hirec_convergence_study(const char* infile, std::ve
 	//project onto exact geometry since each level with uref has only linear coordinates
 	Range verts;
 	error = mbImpl->get_entities_by_dimension(meshset,0,verts); MB_CHK_ERR(error);
-	/*for(Range::iterator ivert=verts.begin();ivert!=verts.end();++ivert){
+	for(Range::iterator ivert=verts.begin();ivert!=verts.end();++ivert){
 		EntityHandle currvert = *ivert;
 		double currcoords[3],exactcoords[3];
 		error = mbImpl->get_coords(&currvert,1,currcoords); MB_CHK_ERR(error);
@@ -146,10 +146,10 @@ ErrorCode closedsurface_uref_hirec_convergence_study(const char* infile, std::ve
 		//for debug
 		error = mbImpl->get_coords(&currvert,1,currcoords); MB_CHK_ERR(error);
 		assert(currcoords[0]==exactcoords[0]&&currcoords[1]==exactcoords[1]&&currcoords[2]==exactcoords[2]);
-	}*/
+	}
 
 	//test ahf on mesh with ghost layers
-	Range verts_owned;
+	/*Range verts_owned;
 	#ifdef MOAB_HAVE_MPI
 		if(pc){
 			error = pc->filter_pstatus(verts,PSTATUS_GHOST,PSTATUS_NOT,-1,&verts_owned); MB_CHK_ERR(error);
@@ -223,7 +223,7 @@ ErrorCode closedsurface_uref_hirec_convergence_study(const char* infile, std::ve
 			}
 		}
 		exit(0);
-	#endif
+	#endif*/
 
 	//generate random points on each elements, assument 3D coordinates
 	int nvpe = TYPE_FROM_HANDLE(*elems.begin())==MBTRI?3:4;

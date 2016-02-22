@@ -248,7 +248,7 @@ namespace moab
 				* \param elemdim Integer, dimension of elements incidented in vid
 				* \param adjents vector<EntityHandle>, container which push incident elements in
 			*/
-			ErrorCode HiReconstruction::vertex_get_incident_elements(const EntityHandle& vid, const int elemdim, std::vector<EntityHandle>& adjents);
+			ErrorCode vertex_get_incident_elements(const EntityHandle& vid, const int elemdim, std::vector<EntityHandle>& adjents);
 
 			//! \brief Get n-ring neighbor vertices, assuming curve/surface mesh, not volume mesh
 			/** Given a vertex, find its n-ring neighbor vertices including itself in _mesrh2rec. 

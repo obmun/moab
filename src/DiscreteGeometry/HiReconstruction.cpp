@@ -46,8 +46,8 @@ namespace moab
 	ErrorCode HiReconstruction::initialize(bool recwhole){
 		ErrorCode error;
 	
-	#ifdef USE_AHF
-		std::cout << "USE_AHF: Initializing" << std::endl;
+	#ifdef HIREC_USE_AHF
+		std::cout << "HIREC_USE_AHF: Initializing" << std::endl;
 		ahf = new HalfFacetRep(mbImpl,pcomm,_mesh2rec);
 		if(!ahf){
 			return MB_MEMORY_ALLOCATION_FAILED;
@@ -475,7 +475,7 @@ namespace moab
 	 ErrorCode HiReconstruction::vertex_get_incident_elements(const EntityHandle& vid, const int elemdim, std::vector<EntityHandle>& adjents){
 	 	ErrorCode error;
 	 	assert(elemdim==_dim);
-	 #ifdef USE_AHF
+	 #ifdef HIREC_USE_AHF
 	 	error = mbImpl->get_up_adjacencies(vid,elemdim,adjents);
 	 #else
 	 	error = mbImpl->get_adjacencies(&vid,1,elemdim,false,adjents); MB_CHK_ERR(error);
