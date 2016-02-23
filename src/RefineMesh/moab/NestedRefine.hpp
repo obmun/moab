@@ -30,6 +30,7 @@ namespace moab
   class HalfFacetRep;
   class ParallelComm;
   class CpuTimer;
+  class DebugOutput;
 
   class NestedRefine
   {
@@ -143,8 +144,10 @@ namespace moab
     ParallelComm *pcomm;
     HalfFacetRep *ahf;
     CpuTimer *tm;
-
     EntityHandle _rset;
+    DebugOutput *myDebug;
+
+
     Range _inverts, _inedges, _infaces, _incells;
 
     EntityType elementype;
