@@ -484,7 +484,7 @@ AC_CACHE_CHECK([for Fortran name-mangling scheme],
 [mv conftest.$ac_objext cfortran_test.$ac_objext
 
   ac_save_LIBS=$LIBS
-  LIBS="cfortran_test.$ac_objext $LIBS $[]_AC_LANG_PREFIX[]LIBS"
+  LIBS="cfortran_test.$ac_objext $LIBS $[]_AC_LANG_PREFIX[]LIBS $ac_cv_fc_libs"
 
   AC_LANG_PUSH(C)dnl
   ac_success=no
