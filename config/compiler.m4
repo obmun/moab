@@ -249,6 +249,10 @@ if (test "x$ENABLE_FORTRAN" != "xno"); then
   if test "xyes" = "x$enable_f77_optimize"; then
     FFLAGS="$FFLAGS -O2"
   fi
+  AC_FC_PP_DEFINE
+  AC_FC_PP_SRCEXT
+  # AC_F77_LIBRARY_LDFLAGS
+  # AC_FC_LIBRARY_LDFLAGS
 fi
 
   # Check for 32/64 bit.
@@ -299,6 +303,19 @@ fi
 # Distcheck flags for 32-bit and 64-bit builds
 DISTCHECK_CONFIGURE_FLAGS="$DISTCHECK_CONFIGURE_FLAGS --enable-32bit=$enable_32bit --enable-64bit=$enable_64bit"
 
+# Check if platform is BlueGene
+AC_MSG_CHECKING([if platform is IBM BlueGene])
+FATHOM_TRY_COMPILER_DEFINE([__bg__],
+  [MB_DEFS="$MB_DEFS -DBLUEGENE"
+   MB_BLUEGENE_CONF=yes],
+  [MB_BLUEGENE_CONF=no])
+AC_MSG_RESULT([$MB_BLUEGENE_CONF])
+
+# Special overrides for flags
+if (test "x$enable_static" != "xno" && test "x$MB_BLUEGENE_CONF" != "xno"); then
+  LDFLAGS="$LDFLAGS -qnostaticlink -qnostaticlink=libgcc"
+fi
+
 # Check if we are using new Darwin kernels with Clang -- needs libc++ instead of libstdc++
 if (test "x$ENABLE_FORTRAN" != "xno" && test "x$CHECK_FC" != "xno"); then
 
@@ -312,6 +329,15 @@ if (test "x$ENABLE_FORTRAN" != "xno" && test "x$CHECK_FC" != "xno"); then
   FAC_FC_WRAPPERS
   AC_FC_MAIN
   fcxxlinkage=no
+
+  # Check if we are on IBM ANL BG/Q system
+  # Default location on Vesta/Mira: /soft/compilers/ibmcmp-feb2015/vacpp/bg/12.1/bglib64/libibmc++.a
+  # Other location for stdc++ libraries: /bgsys/drivers/ppcfloor/gnu-linux/powerpc64-bgq-linux/lib/libstdc++.a
+  case "`hostname`" in
+    *vesta*)  LIBS="$LIBS /soft/compilers/ibmcmp-feb2015/vacpp/bg/12.1/bglib64/libibmc++.a"; fcxxlinkage=yes ;;
+    *mira*)  LIBS="$LIBS /soft/compilers/ibmcmp-feb2015/vacpp/bg/12.1/bglib64/libibmc++.a"; fcxxlinkage=yes ;;
+  esac
+
   if (test "$cc_compiler" == "Intel"); then
     my_save_ldflags="$LDFLAGS"
     LDFLAGS="$LDFLAGS -cxxlib"
@@ -325,25 +351,34 @@ if (test "x$ENABLE_FORTRAN" != "xno" && test "x$CHECK_FC" != "xno"); then
   else
 
     if (test "$fcxxlinkage" != "yes"); then
-      my_save_ldflags="$LDFLAGS"
-    	if (test "$cc_compiler" != "Clang"); then
-        LDFLAGS="$LDFLAGS -lstdc++"
-        AC_MSG_CHECKING([whether $FC supports -stdlib=libstdc++])
-        AC_LINK_IFELSE([AC_LANG_PROGRAM([])],
-            [AC_MSG_RESULT([yes])]
-            [fcxxlinkage=yes; FFLAGS="$FFLAGS -lstdc++"; FCFLAGS="$FCFLAGS -lstdc++"; FLIBS="$FLIBS -lstdc++"; FCLIBS="$FCLIBS -lstdc++"],
-            [AC_MSG_RESULT([no])]
-        )
-      else
+      # With Clang compilers, we specifically look at two cases: OSX and Ubuntu
+      # On OSX (Mavericks and beyond), -lc++ provides the standard C++ library definitions
+      # But on Ubuntu, we need -lstdc++, so "fcxxlinkage" will not be set to "yes" below
+      if (test "$cc_compiler" == "Clang"); then
+        my_save_ldflags="$LDFLAGS"
         LDFLAGS="$LDFLAGS -lc++"
         AC_MSG_CHECKING([whether $FC supports -stdlib=libc++])
         AC_LINK_IFELSE([AC_LANG_PROGRAM([])],
             [AC_MSG_RESULT([yes])]
-            [fcxxlinkage=yes; FFLAGS="$FFLAGS -lc++"; FCFLAGS="$FCFLAGS -lc++"; FLIBS="$FLIBS -lc++"; FCLIBS="$FCLIBS -lc++"],
+            [fcxxlinkage=yes; FLIBS="$FLIBS -lc++"; FCLIBS="$FCLIBS -lc++"],
             [AC_MSG_RESULT([no])]
         )
+        LDFLAGS="$my_save_ldflags"
       fi
-      LDFLAGS="$my_save_ldflags"
+
+      # GNU and other non-intel compilers will use the standard -lstdc++ linkage
+      # This case also includes the Ubuntu+Clang combination as mentioned before
+      if (test "$cc_compiler" != "Clang" || test "$fcxxlinkage" != "yes"); then
+        my_save_ldflags="$LDFLAGS"
+        LDFLAGS="$LDFLAGS -lstdc++"
+        AC_MSG_CHECKING([whether $FC supports -stdlib=libstdc++])
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([])],
+            [AC_MSG_RESULT([yes])]
+            [fcxxlinkage=yes; FLIBS="$FLIBS -lstdc++"; FCLIBS="$FCLIBS -lstdc++"],
+            [AC_MSG_RESULT([no])]
+        )
+        LDFLAGS="$my_save_ldflags"
+      fi
     fi
 
   fi
@@ -601,25 +636,25 @@ case "$cxx_compiler:$host_cpu" in
   GNU:sparc*)
     FATHOM_CXX_32BIT=-m32
     FATHOM_CXX_64BIT=-m64
-    FATHOM_CXX_SPECIAL="$EXTRA_GNU_FLAGS"
+    FATHOM_CXX_SPECIAL="$EXTRA_GNU_FLAGS $EXTRA_GNU_CXX_FLAGS"
     ;;
   GNU:powerpc*)
     FATHOM_CXX_32BIT=-m32
     FATHOM_CXX_64BIT=-m64
-    FATHOM_CXX_SPECIAL="$EXTRA_GNU_FLAGS"
+    FATHOM_CXX_SPECIAL="$EXTRA_GNU_FLAGS $EXTRA_GNU_CXX_FLAGS"
     ;;
   GNU:i?86|GNU:x86_64)
     FATHOM_CXX_32BIT=-m32
     FATHOM_CXX_64BIT=-m64
-    FATHOM_CXX_SPECIAL="$EXTRA_GNU_FLAGS"
+    FATHOM_CXX_SPECIAL="$EXTRA_GNU_FLAGS $EXTRA_GNU_CXX_FLAGS"
     ;;
   GNU:mips*)
     FATHOM_CXX_32BIT="-mips32 -mabi=32"
     FATHOM_CXX_64BIT="-mips64 -mabi=64"
-    FATHOM_CXX_SPECIAL="$EXTRA_GNU_FLAGS"
+    FATHOM_CXX_SPECIAL="$EXTRA_GNU_FLAGS $EXTRA_GNU_CXX_FLAGS"
     ;;
   GNU:*)
-    FATHOM_CXX_SPECIAL="$EXTRA_GNU_FLAGS"
+    FATHOM_CXX_SPECIAL="$EXTRA_GNU_FLAGS $EXTRA_GNU_CXX_FLAGS"
     ;;
   Intel:*)
     FATHOM_CXX_32BIT=-m32
@@ -629,13 +664,14 @@ case "$cxx_compiler:$host_cpu" in
   VisualAge:*)
     FATHOM_CXX_32BIT=-q32
     FATHOM_CXX_64BIT=-q64
-    FATHOM_CXX_SPECIAL="-qrtti=all"
-    AR="ar -X 32_64"
+    FATHOM_CXX_SPECIAL="$EXTRA_BG_FLAGS -qminimaltoc -qpic=large -qmaxmem=-1 -qlanglvl=variadictemplates"
+    AR="ar"
     NM="nm -B -X 32_64"
     ;;
   VisualAge8:*)
     FATHOM_CXX_32BIT=-q32
     FATHOM_CXX_64BIT=-q64
+    FATHOM_CXX_SPECIAL="$EXTRA_BG_FLAGS -qminimaltoc -qpic=large -qmaxmem=-1 -qlanglvl=variadictemplates"
     NM="nm -B -X 32_64"
     ;;
   MIPSpro:mips)
@@ -651,7 +687,7 @@ case "$cxx_compiler:$host_cpu" in
     FATHOM_CXX_64BIT=-xarch=generic64
     ;;
   Clang:*)
-    FATHOM_CXX_SPECIAL="$EXTRA_GNU_FLAGS"
+    FATHOM_CXX_SPECIAL="$EXTRA_GNU_FLAGS $EXTRA_GNU_CXX_FLAGS"
     FATHOM_CXX_32BIT=-m32
     FATHOM_CXX_64BIT=-m64
     ;;
@@ -746,51 +782,59 @@ case "$cc_compiler:$host_cpu" in
   GNU:sparc*)
     FATHOM_CC_32BIT=-m32
     FATHOM_CC_64BIT=-m64
-    FATHOM_CC_SPECIAL="$EXTRA_GNU_FLAGS"
+    FATHOM_CC_SPECIAL="$EXTRA_GNU_FLAGS $EXTRA_GNU_CXX_FLAGS"
+    FATHOM_FC_SPECIAL="$EXTRA_GNU_FLAGS -Wno-unused-parameter"
     ;;
   GNU:powerpc*)
     FATHOM_CC_32BIT=-m32
     FATHOM_CC_64BIT=-m64
-    FATHOM_CC_SPECIAL="$EXTRA_GNU_FLAGS"
+    FATHOM_CC_SPECIAL="$EXTRA_GNU_FLAGS $EXTRA_GNU_CXX_FLAGS"
+    FATHOM_FC_SPECIAL="$EXTRA_GNU_FLAGS -Wno-unused-parameter"
     ;;
   GNU:i?86|GNU:x86_64)
     FATHOM_CC_32BIT=-m32
     FATHOM_CC_64BIT=-m64
-    FATHOM_CC_SPECIAL="$EXTRA_GNU_FLAGS"
+    FATHOM_CC_SPECIAL="$EXTRA_GNU_FLAGS $EXTRA_GNU_CXX_FLAGS"
+    FATHOM_FC_SPECIAL="$EXTRA_GNU_FLAGS -Wno-unused-parameter"
     ;;
   Intel:*)
     FATHOM_CC_32BIT=-m32
     FATHOM_CC_64BIT=-m64
     FATHOM_CC_SPECIAL="$EXTRA_INTEL_FLAGS -wd981 -wd279 -wd1418 -wd383 -wd1572"
+    FATHOM_FC_SPECIAL="$EXTRA_INTEL_FLAGS -wd981 -wd279 -wd1418 -wd383 -wd1572 $EXTRA_INTEL_FFLAGS"
     ;;
   GNU:mips*)
     FATHOM_CC_32BIT="-mips32 -mabi=32"
     FATHOM_CC_64BIT="-mips64 -mabi=64"
-    FATHOM_CC_SPECIAL="$EXTRA_GNU_FLAGS"
+    FATHOM_CC_SPECIAL="$EXTRA_GNU_FLAGS $EXTRA_GNU_CXX_FLAGS"
+    FATHOM_FC_SPECIAL="$EXTRA_GNU_FLAGS -Wno-unused-parameter"
     ;;
   GNU:*)
-    FATHOM_CC_SPECIAL="$EXTRA_GNU_FLAGS"
+    FATHOM_CC_SPECIAL="$EXTRA_GNU_FLAGS $EXTRA_GNU_CXX_FLAGS"
+    FATHOM_FC_SPECIAL="$EXTRA_GNU_FLAGS -Wno-unused-parameter"
     ;;
   VisualAge:*)
     case "$target_vendor" in
       bgp)
         FATHOM_CC_32BIT=-q32
-	FATHOM_CC_64BIT=-q64
-	AR="ar"
-	NM="nm -B"
+        FATHOM_CC_64BIT=-q64
+        AR="ar"
+        NM="nm -B"
         ;;
       bgq)
         FATHOM_CC_32BIT=-q32
         FATHOM_CC_64BIT=-q64
-	FATHOM_CC_SPECIAL=-qarch=qp
-	FATHOM_CXX_SPECIAL="-qarch=qp -qpic=large -qmaxmem=-1"
+        FATHOM_CC_SPECIAL="$EXTRA_BG_FLAGS -qmaxmem=-1 -qminimaltoc"
+        FATHOM_FC_SPECIAL="$EXTRA_BG_FLAGS -qnoescape -WF,-C! -qddim -qalias=intptr"
         AR="ar"
         NM="nm -B"
         ;;
       *)
         FATHOM_CC_32BIT=-q32
         FATHOM_CC_64BIT=-q64
-        AR="ar -X 32_64"
+        FATHOM_CC_SPECIAL="$EXTRA_BG_FLAGS -qmaxmem=-1 -qminimaltoc"
+        FATHOM_FC_SPECIAL="$EXTRA_BG_FLAGS -qnoescape -WF,-C! -qddim -qalias=intptr"
+        AR="ar"
         NM="nm -B -X 32_64"
         ;;
     esac
@@ -799,12 +843,15 @@ case "$cc_compiler:$host_cpu" in
     FATHOM_CC_32BIT=-n32
     FATHOM_CC_64BIT=-64
     FATHOM_CC_SPECIAL=-LANG:std
+    FATHOM_FC_SPECIAL=-LANG:std
     ;;
   MIPSpro:*)
     FATHOM_CC_SPECIAL=-LANG:std
+    FATHOM_FC_SPECIAL=-LANG:std
     ;;
   Clang:*)
-    FATHOM_CC_SPECIAL="$EXTRA_GNU_FLAGS"
+    FATHOM_CC_SPECIAL="$EXTRA_GNU_FLAGS $EXTRA_GNU_CXX_FLAGS"
+    FATHOM_FC_SPECIAL="$EXTRA_GNU_FLAGS -Wno-unused-parameter"
     FATHOM_CC_32BIT=-m32
     FATHOM_CC_64BIT=-m64
     ;;
@@ -820,6 +867,8 @@ case "$cc_compiler:$host_cpu" in
     ;;
 esac
 AC_MSG_RESULT([$cc_compiler:$host_cpu])
+
+FATHOM_F77_SPECIAL="$FATHOM_FC_SPECIAL"
 ]) # end FATHOM_CC_FLAGS
 
 
