@@ -1314,10 +1314,6 @@ AC_CONFIG_FILES([Makefile
                  src/Makefile
                  src/io/Makefile
                  src/io/mhdf/Makefile
-                 src/LocalDiscretization/Makefile
-                 src/RefineMesh/Makefile
-                 src/parallel/Makefile
-                 src/verdict/Makefile
                  test/Makefile
                  test/dagmc/Makefile
                  test/h5file/Makefile
@@ -1345,13 +1341,12 @@ AC_CONFIG_FILES([Makefile
                  doc/user.dox
                  doc/config.tex
                  MeshFiles/Makefile
-                 MeshFiles/unittest/Makefile
-                 MeshFiles/unittest/io/Makefile
-                 MeshFiles/unittest/fbigeom/Makefile
-                 MeshFiles/unittest/irel/Makefile
-                 MeshFiles/unittest/dagmc/Makefile
-                 MeshFiles/unittest/mbcslam/Makefile
-                 MeshFiles/unittest/h5file/Makefile
+                 MeshFiles/io/Makefile
+                 MeshFiles/fbigeom/Makefile
+                 MeshFiles/irel/Makefile
+                 MeshFiles/dagmc/Makefile
+                 MeshFiles/mbcslam/Makefile
+                 MeshFiles/h5file/Makefile
                  MeshFiles/examples/Makefile
                  ])
 # Specify the headers to create for mesquite

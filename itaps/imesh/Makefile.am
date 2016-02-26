@@ -1,4 +1,4 @@
-MESHDIR = $(abs_top_srcdir)/MeshFiles/unittest
+MESHDIR = $(abs_top_srcdir)/MeshFiles
 
 DEFS += -DSRCDIR=$(srcdir) \
         -DMESHDIR=$(MESHDIR)

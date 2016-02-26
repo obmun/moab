@@ -49,13 +49,13 @@ if ( MOAB_HAVE_MPI )
   # Exercise the coupler and not just findpt:
   add_executable( mbcoupler_test mbcoupler_test.cpp )
   set_source_files_properties( mbcoupler_test.cpp
-    COMPILE_FLAGS "${MOAB_DEFINES} -DMESHDIR=${MOAB_ABSSRC_DIR}/MeshFiles/unittest" )
+    COMPILE_FLAGS "${MOAB_DEFINES} -DMESHDIR=${MOAB_ABSSRC_DIR}/MeshFiles" )
   target_link_libraries( mbcoupler_test mbcoupler iMesh MOAB ${CGM_LIBRARIES} ${MPI_LIBRARIES} )
   add_test( TestMBCoupler mbcoupler_test )
 
   add_executable( ssn_test ssn_test.cpp )
   set_source_files_properties( ssn_test.cpp
-    COMPILE_FLAGS "${MOAB_DEFINES} -DTEST -DMESHDIR=${MOAB_ABSSRC_DIR}/MeshFiles/unittest" )
+    COMPILE_FLAGS "${MOAB_DEFINES} -DTEST -DMESHDIR=${MOAB_ABSSRC_DIR}/MeshFiles" )
   target_link_libraries( ssn_test mbcoupler iMesh MOAB ${CGM_LIBRARIES} ${MPI_LIBRARIES} )
   add_test( TestSSN ssn_test )
 endif ( MOAB_HAVE_MPI )

@@ -8,14 +8,9 @@ AM_CPPFLAGS =
 # Subdirectories to build
 SUBDIRS =
 libMOAB_la_LIBADD =
-if PARALLEL
-  SUBDIRS += parallel
-  libMOAB_la_LIBADD += parallel/libMOABpar.la
-  AM_CPPFLAGS += -I$(srcdir)/parallel
-endif
 
-SUBDIRS += io LocalDiscretization verdict RefineMesh .
-libMOAB_la_LIBADD += io/libmoabio.la LocalDiscretization/libLocalDiscretization.la verdict/libmoabverdict.la RefineMesh/libRefineMesh.la
+SUBDIRS += io .
+libMOAB_la_LIBADD += io/libmoabio.la 
 
 if ENABLE_mesquite
 SUBDIRS += mesquite
@@ -28,9 +23,7 @@ AM_CPPFLAGS += -DIS_BUILDING_MB \
                -I$(srcdir)/io \
                -I$(srcdir)/io/mhdf/include \
                -I$(srcdir)/parallel \
-               -I$(srcdir)/LocalDiscretization \
-               -I$(srcdir)/verdict \
-               -I$(srcdir)/RefineMesh
+               -I$(srcdir)/verdict
 
 # The directory in which to install headers
 libMOAB_la_includedir = $(includedir)
@@ -86,6 +79,7 @@ libMOAB_la_SOURCES = \
   MeshTag.hpp \
   MeshTag.cpp \
   MeshTopoUtil.cpp \
+  RefineMesh/NestedRefine.cpp \
   OrientedBox.cpp \
   OrientedBox.hpp \
   OrientedBoxTreeTool.cpp \
@@ -93,6 +87,12 @@ libMOAB_la_SOURCES = \
   lotte/findpt.c \
   lotte/errmem.c \
   lotte/tensor.c \
+  LocalDiscretization/ElemEvaluator.cpp \
+  LocalDiscretization/LinearHex.cpp \
+  LocalDiscretization/LinearQuad.cpp \
+  LocalDiscretization/LinearTet.cpp \
+  LocalDiscretization/LinearTri.cpp \
+  LocalDiscretization/QuadraticHex.cpp \
   PolyElementSeq.cpp \
   PolyElementSeq.hpp \
   ProgOptions.cpp \
@@ -150,9 +150,25 @@ libMOAB_la_SOURCES = \
   VarLenTag.hpp \
   VertexSequence.hpp \
   VertexSequence.cpp \
+  verdict/V_EdgeMetric.cpp \
+  verdict/V_GaussIntegration.cpp \
+  verdict/V_HexMetric.cpp \
+  verdict/V_KnifeMetric.cpp \
+  verdict/V_PyramidMetric.cpp \
+  verdict/V_QuadMetric.cpp \
+  verdict/V_TetMetric.cpp \
+  verdict/V_TriMetric.cpp \
+  verdict/V_WedgeMetric.cpp \
+  verdict/V_GaussIntegration.hpp \
+  verdict/verdict_defines.hpp \
+  verdict/v_vector.h \
+  verdict/VerdictVector.cpp \
+  verdict/VerdictVector.hpp \
+  verdict/VerdictWrapper.cpp \
   WriteUtil.cpp \
   WriteUtil.hpp \
   moab_mpe.h
+
 
 # The list of header files which are to be installed
 nobase_libMOAB_la_include_HEADERS = \
@@ -192,6 +208,8 @@ nobase_libMOAB_la_include_HEADERS = \
   moab/point_locater/element_maps/quadratic_hex_map.hpp  \
   moab/point_locater/point_locater.hpp \
   moab/point_locater/parametrizer.hpp \
+  moab/NestedRefine.hpp \
+  moab/RefineMesh/Templates.hpp \
   moab/Matrix3.hpp \
   moab/MergeMesh.hpp \
   moab/MeshTopoUtil.hpp \
@@ -220,12 +238,50 @@ nobase_libMOAB_la_include_HEADERS = \
   moab/Version.h \
   moab/WriteUtilIface.hpp \
   moab/WriterIface.hpp \
+  moab/ElemEvaluator.hpp \
+  moab/LocalDiscretization/LinearHex.hpp \
+  moab/LocalDiscretization/LinearQuad.hpp \
+  moab/LocalDiscretization/LinearTet.hpp \
+  moab/LocalDiscretization/LinearTri.hpp \
+  moab/LocalDiscretization/QuadraticHex.hpp \
+  moab/verdict.h \
+  moab/verdict/VerdictWrapper.hpp \
   MBEntityType.h \
   MBCN.h \
   MBCN_protos.h \
   moab/MOABConfig.h \
   MBTagConventions.hpp \
   moab_export.h
+
+if PARALLEL
+  libMOAB_la_SOURCES += \
+     parallel/ParallelComm.cpp \
+     parallel/ProcConfig.cpp \
+     parallel/ParallelData.cpp \
+     parallel/ParallelMergeMesh.cpp \
+     parallel/ReadParallel.cpp \
+     parallel/ReadParallel.hpp \
+     parallel/SharedSetData.cpp \
+     parallel/SharedSetData.hpp \
+     parallel/gs.cpp
+
+if HAVE_HDF5_PARALLEL
+  libMOAB_la_SOURCES += parallel/WriteHDF5Parallel.cpp \
+                        parallel/WriteHDF5Parallel.hpp
+endif
+
+nobase_libMOAB_la_include_HEADERS += \
+     parallel/moab/gs.hpp \
+     parallel/moab_mpi.h \
+     parallel/moab_mpi_config.h \
+     parallel/moab/ParallelComm.hpp \
+     parallel/moab/ParallelMergeMesh.hpp \
+     parallel/moab/ProcConfig.hpp \
+     parallel/moab/ParallelData.hpp \
+     parallel/MBParallelConventions.h
+
+  AM_CPPFLAGS += -I$(srcdir)/parallel
+endif
 
 if ENABLE_metis
   libMOAB_la_SOURCES += MetisPartitioner.cpp
