@@ -990,18 +990,28 @@ if [ $1 ]; then
   # configure METIS
   if [ $need_configuration ]; then
     if (test "$metis_manual_install" != "yes"); then
+      metis_use_cmake="no"
       # configure PACKAGE with a minimal build: MPI
       #export CFLAGS="$CFLAGS -fPIC -DPIC" CXXFLAGS="$CXXFLAGS -fPIC -DPIC" FCFLAGS="$FCFLAGS -fPIC" FFLAGS="$FFLAGS -fPIC" LDFLAGS="$LDFLAGS"
       # echo "export CC=$CC CXX=$CXX CFLAGS=\"$CFLAGS -fPIC -DPIC\" CXXFLAGS=\"$CXXFLAGS -fPIC -DPIC\" LDFLAGS=\"$LDFLAGS\"" > $metis_src_dir/../config_metis.log
-      configure_command="make config cc=\"$CC\" cxx=\"$CXX\" prefix=$metis_install_dir gklib_path=$metis_build_dir/GKlib"
-      # configure_command="cmake $metis_src_dir -DCMAKE_INSTALL_PREFIX=$metis_install_dir -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DGKLIB_PATH=$metis_build_dir/GKlib"
+      if (test "$metis_use_cmake" != "yes"); then
+        configure_command="make config cc=\"$CC\" cxx=\"$CXX\" prefix=$metis_install_dir gklib_path=$metis_build_dir/GKlib"
+      else
+        configure_command="cmake $metis_src_dir -DCMAKE_INSTALL_PREFIX=$metis_install_dir -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DGKLIB_PATH=$metis_build_dir/GKlib"
+      fi
       if (test "$enabledebug" != "no"); then
-      	configure_command="$configure_command -DDEBUG=1"
-        #configure_command="$configure_command debug=1"
+        if (test "$metis_use_cmake" != "yes"); then
+          configure_command="$configure_command debug=1"
+      	else
+      	  configure_command="$configure_command -DDEBUG=1"
+        fi
       fi
       if (test "$enable_shared" != "no"); then
-      	configure_command="$configure_command -DSHARED=1"
-        #configure_command="$configure_command shared=1"
+        if (test "$metis_use_cmake" != "yes"); then
+          configure_command="$configure_command shared=1"
+        else
+      	  configure_command="$configure_command -DSHARED=1"
+        fi
       fi
       eval "echo 'Using configure command :==> cd $metis_build_dir && $configure_command > $metis_src_dir/../config_metis.log' >> $metis_src_dir/../config_metis.log"
       PREFIX_PRINT(Configuring with default options  {debug=$enabledebug} )
