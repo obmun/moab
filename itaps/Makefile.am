@@ -1,4 +1,3 @@
-
 if ENABLE_imesh
   imesh_DIR = imesh
 else
@@ -26,4 +25,3 @@ endif
 include_HEADERS = iBase.h iBase_f.h
 
 SUBDIRS = $(imesh_DIR) $(fbigeom_DIR) $(irel_DIR) $(mesquite_DIR)
-EXTRA_DIST = mkprotos.sh
