@@ -54,5 +54,6 @@ EXTRA_DIST = README \
              hex_2048.vtk \
              quad_1000.h5m \
              quad_1000.vtk \
-             spectral.h5m
+             spectral.h5m \
+             spectral_p4.h5m
 
