@@ -1441,4 +1441,6 @@ if test "x$WARN_PARALLEL_HDF5_NO_COMPLEX" = "xyes"; then
 *************************************************************************])
 fi
 
+# define([ConfigurationSuggestion], [`esyscmd(config/suggest_configure_command)'])
+# m4_echo(echo "m4_expand([ConfigurationSuggestion])")
 
