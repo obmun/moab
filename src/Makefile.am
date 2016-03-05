@@ -216,6 +216,7 @@ nobase_libMOAB_la_include_HEADERS = \
   moab/Version.h \
   moab/WriteUtilIface.hpp \
   moab/WriterIface.hpp \
+  moab/Eigen \
   MBEntityType.h \
   MBCN.h \
   MBCN_protos.h \
