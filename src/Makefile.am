@@ -9,6 +9,7 @@ AM_CPPFLAGS =
 SUBDIRS =
 libMOAB_la_LIBADD =
 
+include moab/EigenHeaders
 SUBDIRS += io .
 libMOAB_la_LIBADD += io/libmoabio.la 
 
@@ -246,6 +247,7 @@ nobase_libMOAB_la_include_HEADERS = \
   moab/LocalDiscretization/QuadraticHex.hpp \
   moab/verdict.h \
   moab/verdict/VerdictWrapper.hpp \
+  $(EIGEN_INST_HDRS) \
   MBEntityType.h \
   MBCN.h \
   MBCN_protos.h \
