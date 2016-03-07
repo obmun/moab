@@ -153,8 +153,8 @@ fi
 AC_DEFUN([FATHOM_CHECK_PNETCDF],[
 
 AC_ARG_WITH(pnetcdf, 
-[AS_HELP_STRING([--with-pnetcdf@<:@=DIR@:>@], [Specify Pnetcdf library to use])
-AS_HELP_STRING([--without-pnetcdf], [Disable support for Pnetcdf-based file formats])],
+[AS_HELP_STRING([--with-pnetcdf@<:@=DIR@:>@], [Specify PNetCDF library to use])
+AS_HELP_STRING([--without-pnetcdf], [Disable support for PNetCDF-based file formats])],
 [PNETCDF_DIR=$withval
 DISTCHECK_CONFIGURE_FLAGS="$DISTCHECK_CONFIGURE_FLAGS --with-pnetcdf=\"${withval}\""
 ]
@@ -165,12 +165,12 @@ if test "xyes" != "x$enablempi"; then
   if test "x" == "x$PNETCDF_DIR"; then
     PNETCDF_DIR=no
   elif test "xno" != "xPNETCDF_DIR"; then
-    AC_MSG_ERROR([Pnetcdf requires --with-mpi])
+    AC_MSG_ERROR([PNetCDF requires --with-mpi])
   fi
   enablepnetcdf=no
 fi
 
-AC_MSG_CHECKING([if Pnetcdf support is enabled])
+AC_MSG_CHECKING([if PNetCDF support is enabled])
 if (test "xno" != "x$PNETCDF_DIR" && test "x$PNETCDF_DIR" != "x"); then
   AC_MSG_RESULT([yes])
 else
@@ -220,7 +220,7 @@ if (test "xno" != "x$PNETCDF_DIR" && test "x$PNETCDF_DIR" != "x"); then
 
   if test "x$enablepnetcdf" = "xno"; then
     if test "x$PNETCDF_DIR" != "x"; then 
-      AC_MSG_ERROR("Pnetcdf not found or not working")
+      AC_MSG_ERROR("PNetCDF not found or not working")
     fi
     PNETCDF_CPPFLAGS=
     PNETCDF_LDFLAGS=
