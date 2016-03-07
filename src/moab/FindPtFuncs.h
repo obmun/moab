@@ -9,6 +9,14 @@
 /======================================================
 */
 
+#ifdef INTEGER
+#undef INTEGER
+#endif
+
+#ifdef real
+#undef real
+#endif
+
 /* integer type to use for everything */
 #if   defined(USE_LONG)
 #  define INTEGER long
@@ -31,7 +39,7 @@
 
 /* floating point type to use for everything */
 #if   defined(USE_FLOAT)
-   typedef float real;
+#  define real float
 #  define floorr floorf
 #  define ceilr  ceilf
 #  define sqrtr  sqrtf
@@ -41,7 +49,7 @@
 #  define EPS   (128*FLT_EPSILON)
 #  define PI 3.1415926535897932384626433832795028841971693993751058209749445923F
 #elif defined(USE_LONG_DOUBLE)
-   typedef long double real;
+#  define real long double
 #  define floorr floorl
 #  define ceilr  ceill
 #  define sqrtr  sqrtl
@@ -51,7 +59,7 @@
 #  define EPS   (128*LDBL_EPSILON)
 #  define PI 3.1415926535897932384626433832795028841971693993751058209749445923L
 #else
-   typedef double real;
+#  define real double
 #  define floorr floor
 #  define ceilr  ceil
 #  define sqrtr  sqrt
