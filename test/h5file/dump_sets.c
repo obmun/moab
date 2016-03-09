@@ -46,8 +46,7 @@ int main( int argc, char* argv[] )
 
 void dump_sets( mhdf_FileHandle file )
 {
-  long *end_indices, *data;
-  long* new_data;
+  long *end_indices, *data, *new_data;
   int* flags;
   long num_sets, first, num_data;
   hid_t meta, handle;
