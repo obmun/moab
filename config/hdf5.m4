@@ -28,14 +28,14 @@ fi
 
 #######################################################################################
 # Check for HDF5 library and related stuff
-# Sets HAVE_HDF5 to 'yes' or 'no'
-# If HAVE_HDF5 == yes, then sets:
+# Sets enablehdf5 to 'yes' or 'no'
+# If enablehdf5 == yes, then sets:
 #  HDF5_CPPFLAGS
 #  HDF5_LDFLAGS
 #  HDF5_LIBS
 #######################################################################################
 AC_DEFUN([FATHOM_CHECK_HDF5],[
-
+  
   # CLI option for linking zlib
 AC_ARG_WITH(zlib,
   [AS_HELP_STRING([--with-zlib=DIR],[HDF5 requires zlib, and zlib can be found at...])],
@@ -110,38 +110,42 @@ AC_MSG_CHECKING([if HDF5 support is enabled])
 AC_ARG_WITH(hdf5, 
 [AS_HELP_STRING([--with-hdf5@<:@=DIR@:>@], [Specify HDF5 library to use for native file format])
 AS_HELP_STRING([--without-hdf5], [Disable support for native HDF5 file format])],
-[HDF5_ARG=$withval
+[HDF5_DIR=$withval
  DISTCHECK_CONFIGURE_FLAGS="$DISTCHECK_CONFIGURE_FLAGS --with-hdf5=\"${withval}\""
-], [HDF5_ARG=])
-if test "xno" = "x$HDF5_ARG"; then
+], [HDF5_DIR=$HDF5_DIR])
+if (test "x" == "x$HDF5_DIR" || test "xno" == "x$HDF5_DIR"); then
   AC_MSG_RESULT([no])
 else
   AC_MSG_RESULT([yes])
 fi
 
-HAVE_HDF5=no
-if test "xno" != "x$HDF5_ARG"; then
-  HAVE_HDF5=yes
+# Supported HDF5 versions: 1.8.10, 1.8.12, 1.8.14, 1.8.15
+# Arguments: 1) Default Version Number, 2) Download by default ?
+AUSCM_CONFIGURE_DOWNLOAD_HDF5([1.8.12],[no])
+
+enablehdf5=no
+if (test "x" != "x$HDF5_DIR" || test "xno" != "x$HDF5_DIR"); then
+  enablehdf5=yes
 
     # if a path is specified, update LIBS and INCLUDES accordingly
-  if test "xyes" != "x$HDF5_ARG" && test "x" != "x$HDF5_ARG"; then
-    if test -d "${HDF5_ARG}/dll"; then
-      HDF5_LDFLAGS="$HDF5_LDFLAGS -L${HDF5_ARG}/dll"
+  if test "xyes" != "x$HDF5_DIR" && test "x" != "x$HDF5_DIR"; then
+    if test -d "${HDF5_DIR}/dll"; then
+      HDF5_LDFLAGS="$HDF5_LDFLAGS -L${HDF5_DIR}/dll"
       HDF5_LIBNAME=hdf5dll
-    elif test -d "${HDF5_ARG}/lib"; then
-      HDF5_LDFLAGS="$HDF5_LDFLAGS -L${HDF5_ARG}/lib"
-    elif test -d "${HDF5_ARG}"; then
-      HDF5_LDFLAGS="$HDF5_LDFLAGS -L${HDF5_ARG}"
+    elif test -d "${HDF5_DIR}/lib"; then
+      HDF5_LDFLAGS="$HDF5_LDFLAGS -L${HDF5_DIR}/lib"
+    elif test -d "${HDF5_DIR}"; then
+      HDF5_LDFLAGS="$HDF5_LDFLAGS -L${HDF5_DIR}"
     else
-      AC_MSG_ERROR("$HDF5_ARG is not a directory.")
+      AC_MSG_ERROR("$HDF5_DIR is not a directory.")
     fi
-    if test -d "${HDF5_ARG}/include"; then
-      HDF5_CPPFLAGS="$HDF5_CPPFLAGS -I${HDF5_ARG}/include"
+    if test -d "${HDF5_DIR}/include"; then
+      HDF5_CPPFLAGS="$HDF5_CPPFLAGS -I${HDF5_DIR}/include"
       if test "x$GXX" = "xyes" && test "x$GCC" = "xyes"; then
-        HDF5_CPPFLAGS="$HDF5_CPPFLAGS -isystem ${HDF5_ARG}/include"
+        HDF5_CPPFLAGS="$HDF5_CPPFLAGS -isystem ${HDF5_DIR}/include"
       fi
     else
-      HDF5_CPPFLAGS="$HDF5_CPPFLAGS -I${HDF5_ARG}"
+      HDF5_CPPFLAGS="$HDF5_CPPFLAGS -I${HDF5_DIR}"
     fi
   fi
  
@@ -158,18 +162,18 @@ if test "xno" != "x$HDF5_ARG"; then
   LDFLAGS="$HDF5_LDFLAGS $LDFLAGS"
   LIBS="$HDF5_LIBS $LIBS"
   
-    # check for libraries and headers
-  AC_CHECK_HEADERS( [hdf5.h], [], [HAVE_HDF5=no] )
+  # check for libraries and headers
+  AC_CHECK_HEADERS( [hdf5.h], [], [enablehdf5=no] )
 
   HAVE_LIB_HDF5=no
   FATHOM_DETECT_HDF5_LIBS
 
-  if test "x$HAVE_LIB_HDF5" = "xno"; then
-    HAVE_HDF5=no
+  if (test "x$HAVE_LIB_HDF5" != "xyes"); then
+    enablehdf5=no
   fi
   
-  if test "x$HAVE_HDF5" = "xno"; then
-    if test "x" = "x$HDF5_ARG"; then
+  if (test "x$enablehdf5" != "xyes"); then
+    if test "x" = "x$HDF5_DIR"; then
       AC_MSG_WARN([HDF5 library not found or not usable.])
     else
       AC_MSG_ERROR([HDF5 library not found or not usable.])
@@ -185,5 +189,61 @@ if test "xno" != "x$HDF5_ARG"; then
   LDFLAGS="$old_LDFLAGS"
   LIBS="$old_LIBS"
 fi
+
+if (test "xyes" != "x$enablehdf5"); then
+  AC_MSG_WARN([Support for native HDF5 file format disabled])
+else
+  AC_DEFINE([HAVE_HDF5],[1],[Define if configured with HDF5 support.])
+fi
+AM_CONDITIONAL(HAVE_HDF5, [test "xno" != "x$enablehdf5"])
+AC_SUBST(enablehdf5)
+MB_CPPFLAGS="$HDF5_CPPFLAGS $MB_CPPFLAGS"
+EXPORT_LDFLAGS="$EXPORT_LDFLAGS $HDF5_LDFLAGS"
+AC_SUBST(HDF5_LIBS)
+
+WARN_PARALLEL_HDF5=no
+WARN_PARALLEL_HDF5_NO_COMPLEX=no
+enablehdf5parallel=no
+if (test "xno" != "x$enablehdf5"); then
+  if (test "xno" != "x$enablempi"); then
+    old_LDFLAGS="$LDFLAGS"
+    old_LIBS="$LIBS"
+    LDFLAGS="$LDFLAGS $HDF5_LDFLAGS"
+    LIBS="$HDF5_LIBS $LIBS -lhdf5"
+    IS_HDF5_PARALLEL=""
+    AC_PATH_PROGS([H5CC], [h5cc h5pcc], [], [$HDF5_DIR/bin])
+    AC_MSG_CHECKING([for parallel HDF5 support])
+    if (test "x$H5CC" != "x"); then dnl check if HDF5 was configured with parallel support
+      IS_HDF5_PARALLEL="`$H5CC -showconfig | grep 'Parallel HDF5: yes'`"
+    fi
+
+    if (test "x$IS_HDF5_PARALLEL" != "x"); then
+      AC_MSG_RESULT(yes)
+      enablehdf5parallel=yes
+    else
+      AC_MSG_RESULT(no)
+      WARN_PARALLEL_HDF5=yes
+      AC_MSG_WARN("libhdf5 library does not include parallel support.  Parallel HDF5 I/O disabled")
+    fi
+
+    LDFLAGS="$old_LDFLAGS"
+    LIBS="$old_LIBS"
+  fi
+fi
+AM_CONDITIONAL(HAVE_HDF5_PARALLEL, [test "xno" != "x$enablehdf5parallel"])
+if test "xno" != "x$enablehdf5parallel"; then
+  AC_DEFINE([HAVE_HDF5_PARALLEL],[1],[Define if configured with Parallel HDF5 support.])
+  
+  AC_MSG_CHECKING([for H5_MPI_COMPLEX_DERIVED_DATATYPE_WORKS])
+  old_CPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="$CPPFLAGS $HDF5_CPPFLAGS"
+  AC_PREPROC_IFELSE([AC_LANG_PROGRAM([#include <H5pubconf.h>],[
+#ifndef H5_MPI_COMPLEX_DERIVED_DATATYPE_WORKS
+  choke me
+#endif])],[AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no); WARN_PARALLEL_HDF5_NO_COMPLEX=yes])
+  CPPFLAGS="$old_CPPFLAGS"
+fi
+AC_SUBST(enablehdf5parallel)
+
 
 ]) # FATHOM_CHECK_HDF5
