@@ -365,7 +365,7 @@ namespace moab
 
      bool check_for_parallelinfo(EntityHandle entity, int proc, std::multimap<EntityHandle, int> &remProcs);
 
-     ErrorCode check_for_parallelinfo(EntityHandle entity, int proc, std::multimap<EntityHandle, int> &remProcs, std::multimap<EntityHandle, EntityHandle> &remHandles, EntityHandle &rhandle);
+     ErrorCode check_for_parallelinfo(EntityHandle entity, int proc, std::multimap<EntityHandle, EntityHandle> &remHandles, std::multimap<EntityHandle, int> &remProcs, EntityHandle &rhandle);
   };
 } //name space moab
 #endif
