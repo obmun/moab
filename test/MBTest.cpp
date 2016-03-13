@@ -2345,7 +2345,7 @@ ErrorCode mb_mesh_set_flag_test()
   MB_CHK_ERR(rval);
   rval = mb->get_meshset_options( set, flags );
   MB_CHK_ERR(rval);
-  if(MESHSET_SET&flags || !MESHSET_TRACK_OWNER&flags || MESHSET_ORDERED&flags){
+  if( (MESHSET_SET&flags) || !(MESHSET_TRACK_OWNER&flags) || (MESHSET_ORDERED&flags) ){
     std::cerr << "set should be MESHSET_TRACK_OWNER only, flags=" << flags 
               << std::endl;
     return MB_FAILURE;
@@ -2366,7 +2366,7 @@ ErrorCode mb_mesh_set_flag_test()
   MB_CHK_ERR(rval);
   rval = mb->get_meshset_options( set, flags );
   MB_CHK_ERR(rval);
-  if(!MESHSET_SET&flags || MESHSET_TRACK_OWNER&flags || MESHSET_ORDERED&flags){
+  if(!(MESHSET_SET&flags) || (MESHSET_TRACK_OWNER&flags) || (MESHSET_ORDERED&flags) ){
     std::cerr << "set should be MESHSET_SET only, flags=" << flags 
               << std::endl;
     return MB_FAILURE;
@@ -2396,7 +2396,7 @@ ErrorCode mb_mesh_set_flag_test()
   MB_CHK_ERR(rval);
   rval = mb->get_meshset_options( set, flags );
   MB_CHK_ERR(rval);
-  if(MESHSET_SET&flags || MESHSET_TRACK_OWNER&flags || !MESHSET_ORDERED&flags){
+  if( (MESHSET_SET&flags) || (MESHSET_TRACK_OWNER&flags) || !(MESHSET_ORDERED&flags) ){
     std::cerr << "set should be MESHSET_ORDERED only, flags=" << flags 
               << std::endl;
     return MB_FAILURE;
@@ -2424,7 +2424,7 @@ ErrorCode mb_mesh_set_flag_test()
   MB_CHK_ERR(rval);
   rval = mb->get_meshset_options( set, flags );
   MB_CHK_ERR(rval);
-  if(!MESHSET_SET&flags || MESHSET_TRACK_OWNER&flags || MESHSET_ORDERED&flags){
+  if(!(MESHSET_SET&flags) || (MESHSET_TRACK_OWNER&flags) || MESHSET_ORDERED&flags){
     std::cerr << "set should be MESHSET_SET only, flags=" << flags 
               << std::endl;
     return MB_FAILURE;
