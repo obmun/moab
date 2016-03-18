@@ -61,10 +61,14 @@ const Matrix3 origaxes ( 5*unitaxes.col(0),
 const OrientedBox oblongbox( origaxes, origin );
 
   // define non-axis-aligned unit box at origin
-const Matrix3 rotaxes ( unit( CartVect( 1.0, 1.0, 0.0 ) ),
-                        unit( CartVect( 1.0,-1.0, 1.0 ) ),
-                        unit( CartVect( 1.0, 1.0, 0.0 ) * CartVect( 1.0,-1.0, 1.0 ) ) );
+const CartVect rotax0 = unit( CartVect( 1.0, 1.0, 0.0 ) );
+const CartVect rotax1 = unit( CartVect( 1.0,-1.0, 1.0 ) );
+const CartVect rotax2 = unit( CartVect( 1.0, 1.0, 0.0 ) * CartVect( 1.0,-1.0, 1.0 ) );
+const OrientedBox rotbox_cv( {rotax0, rotax1, rotax2}, origin );
+
+const Matrix3 rotaxes(rotax0, rotax1, rotax2, true);
 const OrientedBox rotbox( rotaxes, origin );
+
 
 /********************* Utility methods for tests ***************************/
 
@@ -141,10 +145,10 @@ static void test_basic()
   ASSERT_DOUBLES_EQUAL( oblongbox.outer_radius(), dims.length() );
   ASSERT_DOUBLES_EQUAL( oblongbox.volume(), 8.0*dims[0]*dims[1]*dims[2] );
   ASSERT_VECTORS_EQUAL( oblongbox.dimensions(), 2*dims );
- 
+
+  //test matrix constructor
   axis_dims( rotaxes, dims );
   ASSERT_VECTORS_EQUAL( rotbox.center, origin );
-  std::cout << ">> OrientedBox: " << rotbox << std::endl;
   ASSERT_VECTOR_ELEMENT( rotbox.scaled_axis(0), rotaxes );
   ASSERT_VECTOR_ELEMENT( rotbox.scaled_axis(1), rotaxes );
   ASSERT_VECTOR_ELEMENT( rotbox.scaled_axis(2), rotaxes );
@@ -152,6 +156,18 @@ static void test_basic()
   ASSERT_DOUBLES_EQUAL( rotbox.outer_radius(), dims.length() );
   ASSERT_DOUBLES_EQUAL( rotbox.volume(), 8.0*dims[0]*dims[1]*dims[2] );
   ASSERT_VECTORS_EQUAL( rotbox.dimensions(), 2*dims );
+
+  //test cartvect constructor
+  axis_dims( rotaxes, dims );
+  ASSERT_VECTORS_EQUAL( rotbox_cv.center, origin );
+  ASSERT_VECTORS_EQUAL( rotbox_cv.scaled_axis(0), rotax0 );
+  ASSERT_VECTORS_EQUAL( rotbox_cv.scaled_axis(1), rotax1 );
+  ASSERT_VECTORS_EQUAL( rotbox_cv.scaled_axis(2), rotax2 );
+  ASSERT_DOUBLES_EQUAL( rotbox_cv.inner_radius(), dims[0] );
+  ASSERT_DOUBLES_EQUAL( rotbox_cv.outer_radius(), dims.length() );
+  ASSERT_DOUBLES_EQUAL( rotbox_cv.volume(), 8.0*dims[0]*dims[1]*dims[2] );
+  ASSERT_VECTORS_EQUAL( rotbox_cv.dimensions(), 2*dims );
+  
 }
 
 static void test_contained() 
@@ -1288,8 +1304,8 @@ void test_build_from_tri()
   ASSERT( box.dimensions()[0] <= TOL );
     // verify that other two axes are in XY plane
   const CartVect z_axis(0.0,0.0,1.0);
-  ASSERT( fabs(box.axis.col(1) % z_axis) <= TOL );
-  ASSERT( fabs(box.axis.col(2) % z_axis) <= TOL );
+  ASSERT( fabs(box.axis(1) % z_axis) <= TOL );
+  ASSERT( fabs(box.axis(2) % z_axis) <= TOL );
 }
                          
     
@@ -1407,7 +1423,6 @@ static void assert_vector_element( const CartVect& a,
   }
   return;
 }
-
 
 void assert_vectors_equal( const CartVect& a, const CartVect& b, 
                            const char* sa, const char* sb,
