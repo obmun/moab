@@ -37,8 +37,8 @@ AC_DEFUN([FATHOM_CHECK_MPI_ENABLED], [
   AC_COMPILE_IFELSE(
    [AC_LANG_PROGRAM( [#include <mpi.h>]
    [int i=MPI_SUCCESS;] )],
-   [AC_MSG_RESULT([yes]); enablempi=yes],
-    [AC_MSG_RESULT([no]); enablempi=no])
+   [AC_MSG_RESULT([yes]); $1=yes],
+    [AC_MSG_RESULT([no]); $1=no])
   AC_LANG_POP([C++])
 ])
 
@@ -134,7 +134,8 @@ if test "xno" != "x$enablempi"; then
   COMPILERPATHS="${WITH_MPI}/bin"
 fi
 
-FATHOM_CHECK_MPI_ENABLED
+FATHOM_CHECK_MPI_ENABLED([compiler_supports_mpi])
+AC_SUBST(compiler_supports_mpi)
 
 # C support
 FATHOM_SET_MPI_COMPILER([CC],  [$CC_LIST], [$COMPILERPATHS])
