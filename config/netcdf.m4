@@ -86,7 +86,7 @@ if test "xno" != "x$NETCDF_ARG"; then
     fi
   fi
  
-  AC_PATH_PROG([NC_CONFIG], [nc-config], [no], [${NETCDF_ARG}/bin])
+  AC_PATH_PROG([NC_CONFIG], [nc-config], [no], [${NETCDF_ARG}/bin:${PATH}])
   if test "$NC_CONFIG" != "no" ; then
     NETCDF_CPPFLAGS="`$NC_CONFIG --cflags`"
     NETCDF_LDFLAGS="`$NC_CONFIG --libs`"
